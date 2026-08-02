@@ -11,6 +11,18 @@ export default function App() {
   const [activeTierId, setActiveTierId] = useState(0);
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedTierName, setSelectedTierName] = useState('');
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('dsa_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('dsa_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,6 +51,8 @@ export default function App() {
       <Header
         activeFilter={activeFilter}
         onSelectFilter={key => setActiveFilter(key)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       <div className="shell">
@@ -65,7 +79,7 @@ export default function App() {
 
                 {tier.groups.map((grp, gIdx) => (
                   <section key={gIdx} className="group">
-                    <h3 className="grp">{grp.title}</h3>
+                    {grp.title && <h3 className="grp">{grp.title}</h3>}
                     <ul className="items">
                       {grp.items
                         .filter(item => !activeFilter || item.tag === activeFilter)

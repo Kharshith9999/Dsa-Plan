@@ -39,7 +39,7 @@ export default function DrilldownModal({ topic, tierName, onClose }) {
         </div>
 
         <div className="drill-title-bar">
-          <h3 className="drill-atom-title">{topic.title}</h3>
+          <h3 className="drill-atom-title" dangerouslySetInnerHTML={{ __html: topic.title }} />
           <div className="drill-atom-tags">
             <span className={`tag tag-${topic.tag}`}>{topic.tag}</span>
           </div>

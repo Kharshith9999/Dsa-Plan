@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Header({ activeFilter, onSelectFilter }) {
+export default function Header({ activeFilter, onSelectFilter, theme, onToggleTheme }) {
   const filters = [
     { key: 'I', label: 'I', desc: 'Interview-critical — FAANG/product rounds' },
     { key: 'C', label: 'C', desc: 'Codeforces / ICPC' },
@@ -24,6 +24,15 @@ export default function Header({ activeFilter, onSelectFilter }) {
               <span className="filter-txt">{f.desc}</span>
             </button>
           ))}
+          
+          <button
+            type="button"
+            className="theme-btn"
+            onClick={onToggleTheme}
+            title="Toggle Light / Dark Cyber Mode"
+          >
+            {theme === 'dark' ? '☀️ Light' : '🌙 Cyber Dark'}
+          </button>
         </div>
       </div>
     </header>
