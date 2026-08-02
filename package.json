@@ -2,12 +2,15 @@
   "name": "dsa-complete-breakdown",
   "private": true,
   "version": "1.0.0",
+  "homepage": "https://Kharshith9999.github.io/Dsa-Plan",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",
@@ -18,6 +21,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "gh-pages": "^6.3.0",
     "vite": "^6.0.5"
   }
 }
