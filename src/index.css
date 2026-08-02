@@ -778,7 +778,7 @@ body {
 /* ---------- responsive ---------- */
 @media (max-width: 1040px) {
   .shell {
-    padding: 0 20px 72px;
+    padding: 0 16px 72px;
   }
   .cols {
     display: block;
@@ -787,34 +787,151 @@ body {
     display: contents;
   }
   .rail {
+    position: sticky;
     top: var(--barH);
     z-index: 30;
     background: var(--paper);
-    border-bottom: 1.5px solid var(--ink);
-    margin: 0 -20px;
-    padding: 10px 20px;
+    border-bottom: 2px solid var(--ink);
+    margin: 0 -16px;
+    padding: 10px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
   .rail-h {
     display: none;
   }
-  .tier {
-    scroll-margin-top: calc(var(--barH) + 60px);
+  .line-sidebar-track, .line-sidebar-active {
+    display: none !important;
+  }
+  .rungs-wrapper {
+    padding-left: 0;
   }
   .rungs {
     flex-direction: row;
     overflow-x: auto;
-    gap: 6px;
+    gap: 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .rungs::-webkit-scrollbar {
+    display: none;
   }
   .rung {
     grid-template-columns: auto auto;
-    min-width: 110px;
-    padding: 6px 8px;
+    min-width: max-content;
+    padding: 7px 12px;
     background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .rung:hover {
+    transform: none;
+  }
+  .rung.on {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+  }
+  .rung.on .rung-num {
+    color: var(--paper);
+  }
+  .tier {
+    scroll-margin-top: calc(var(--barH) + 64px);
+    padding-bottom: 40px;
   }
   .main {
-    padding-top: 28px;
+    padding-top: 24px;
   }
   .mast {
-    padding-top: 40px;
+    padding: 36px 0 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bar-in {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .brand {
+    font-size: 13px;
+    letter-spacing: .08em;
+  }
+  .filter-txt {
+    display: none;
+  }
+  .filter {
+    padding: 4px 6px;
+  }
+  .theme-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    margin-left: auto;
+  }
+  .mast h1 {
+    font-size: clamp(26px, 7vw, 40px);
+  }
+  .howto {
+    font-size: 14.5px;
+    margin: 14px 0 8px;
+  }
+  .total {
+    font-size: 14.5px;
+  }
+  .item-row {
+    padding: 11px 12px;
+    gap: 10px;
+    min-height: 48px;
+  }
+  .item-row:hover {
+    transform: none;
+  }
+  .item-row:active {
+    transform: scale(0.99);
+    background: var(--paper-2);
+  }
+  .txt {
+    font-size: 14px;
+  }
+  .drill-overlay {
+    padding: 12px;
+  }
+  .drill-modal {
+    width: 96vw;
+    max-height: 90vh;
+    border-radius: 10px;
+  }
+  .drill-modal-header {
+    padding: 12px 16px;
+  }
+  .drill-crumb {
+    font-size: 11px;
+  }
+  .modal-close-x {
+    width: 30px;
+    height: 34px;
+    font-size: 14px;
+  }
+  .drill-title-bar {
+    padding: 14px 16px 12px;
+  }
+  .drill-atom-title {
+    font-size: 17px;
+  }
+  .drill-tabs {
+    padding: 0 16px;
+    gap: 4px;
+  }
+  .drill-tab {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .drill-body {
+    padding: 16px;
+  }
+  .drill-code {
+    padding: 12px 14px;
+    font-size: 12px;
   }
 }
