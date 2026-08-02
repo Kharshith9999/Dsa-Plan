@@ -2,13 +2,9 @@ import React from 'react';
 
 export default function Masthead() {
   return (
-    <header className="mast">
+    <header className="mast cyber-mast">
       <div className="mast-title">
-        <img
-          src="./dsa_title_photo.png"
-          alt="DSA Classic Manuscript & Study Desk"
-          className="title-photo"
-        />
+        <div className="cyber-badge">SYSTEM // 395 ATOMS</div>
         <h1>DSA — Complete Atomic Breakdown</h1>
       </div>
       <p className="howto">
