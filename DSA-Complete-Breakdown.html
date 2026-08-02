@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Koneti's DSA Breakdown</title>
+<link rel="icon" type="image/png" href="dsa_title_photo.png">
+<link rel="shortcut icon" type="image/png" href="dsa_title_photo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F5F0; --paper-2:#ECE8E1; --ink:#16181A; --ink-2:#353B37; --muted:#646A63;
+  --rule:#D4D8CF; --rule-2:#C2C7BB;
+  --I:#166544; --C:#6B3FA0; --B:#264386; --O:#6E756D;
+  --disp:"Merriweather",Georgia,serif;
+  --body:"Merriweather",Georgia,serif;
+  --mono:"Merriweather",Georgia,serif;
+  --rail:288px;
+  --barH:58px;   /* measured at runtime */
+  --railH:0px;   /* measured at runtime, mobile only */
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);
+  font-size:15.5px;line-height:1.6;font-weight:700;-webkit-font-smoothing:antialiased}
+
+/* classic editorial effects */
+.mast{border-bottom:3px double var(--ink);padding-bottom:28px}
+.title-photo{border-radius:4px;border:2px solid var(--ink);box-shadow:5px 5px 0px var(--ink);transition:transform .2s ease}
+.title-photo:hover{transform:translate(-2px, -2px);box-shadow:7px 7px 0px var(--ink)}
+.tier-head{border-bottom:3px double var(--ink)!important}
+.rung{transition:all .15s ease}
+.rung:hover{background:var(--paper-2);padding-left:12px}
+.item label{transition:background .15s ease}
+.item label:hover{background:var(--paper-2)}
+.box{border:2px solid var(--ink-2);border-radius:2px;transition:all .15s ease}
+input:checked+.box{background:var(--I);border-color:var(--I)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+/* ---------- top bar ---------- */
+.bar{position:sticky;top:0;z-index:40;background:rgba(237,239,234,.93);
+  backdrop-filter:blur(8px);border-bottom:1.5px solid var(--rule)}
+.bar-in{max-width:1360px;margin:0 auto;padding:10px 24px;display:flex;
+  align-items:center;gap:20px;flex-wrap:wrap}
+.brand{font-family:var(--disp);font-weight:900;font-size:15px;letter-spacing:.12em;
+  text-transform:uppercase;white-space:nowrap}
+.meter{flex:1;min-width:180px;display:flex;align-items:center;gap:12px}
+.meter-track{flex:1;height:6px;background:var(--rule);position:relative;overflow:hidden;border-radius:2px}
+.meter-track i{position:absolute;inset:0 auto 0 0;width:0%;background:var(--I);
+  transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.meter-num{font-family:var(--mono);font-size:12.5px;font-weight:700;white-space:nowrap;
+  letter-spacing:.02em}
+.filters{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.filter{display:inline-flex;align-items:center;gap:6px;background:none;cursor:pointer;
+  border:1.5px solid transparent;padding:4px 9px;border-radius:2px;
+  font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+.filter:hover{border-color:var(--rule-2)}
+.filter[aria-pressed="true"]{border-color:var(--ink);color:var(--ink);background:var(--paper-2)}
+.filter-txt{text-transform:lowercase}
+.ghost{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--muted);background:none;
+  border:1.5px solid var(--rule-2);border-radius:2px;padding:4px 10px;cursor:pointer}
+.ghost:hover{color:var(--ink);border-color:var(--ink)}
+:focus-visible{outline:2px solid var(--B);outline-offset:2px}
+
+/* ---------- shell ---------- */
+.shell{max-width:1360px;margin:0 auto;padding:0 24px 96px}
+/* rail + main share a grid; tail/foot sit OUTSIDE it so the sticky rail
+   can never bleed into them */
+.cols{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);gap:56px;
+  align-items:stretch}
+.rail-col{min-width:0;padding-top:34px}
+
+/* ---------- masthead ---------- */
+.mast{padding:54px 0 34px;border-bottom:2px solid var(--ink)}
+.mast-title{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.title-photo{width:110px;height:110px;object-fit:cover;border-radius:6px;border:2px solid var(--ink);box-shadow:4px 4px 0px var(--ink);flex-shrink:0;transition:transform .2s ease}
+.title-photo:hover{transform:scale(1.03)}
+.mast h1{font-family:var(--disp);font-weight:900;font-size:clamp(38px,6.4vw,72px);
+  line-height:.96;letter-spacing:-.03em;margin:0;max-width:14ch}
+.howto{max-width:62ch;margin:0 0 14px;color:var(--ink-2);font-weight:700;font-size:16px}
+.total{font-family:var(--mono);font-size:13px;color:var(--muted);margin:0;
+  letter-spacing:.01em;font-weight:700}
+.total strong{color:var(--ink);font-weight:900}
+
+/* ---------- tier rail (ReactBits Line Sidebar) ---------- */
+.rail{position:sticky;top:calc(var(--barH) + 16px)}
+.rail-h{font-family:var(--body);font-size:11px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px;padding-left:14px}
+.rungs-wrapper{position:relative;padding-left:14px}
+.line-sidebar-track{position:absolute;left:4px;top:0;bottom:0;width:2px;background:var(--rule-2);border-radius:1px}
+.line-sidebar-active{position:absolute;left:3.5px;top:0;width:3px;height:32px;background:var(--ink);
+  border-radius:2px;box-shadow:0 0 8px rgba(22,24,26,0.35);
+  transition:transform .32s cubic-bezier(.2,.8,.2,1), height .32s cubic-bezier(.2,.8,.2,1);
+  will-change:transform, height;pointer-events:none;z-index:2}
+.line-sidebar-hover{position:absolute;left:3.5px;top:0;width:3px;height:32px;background:var(--muted);
+  border-radius:2px;opacity:0;transition:transform .2s ease, opacity .2s ease, height .2s ease;
+  pointer-events:none;z-index:1}
+
+.rungs{display:flex;flex-direction:column;border-left:0;gap:2px}
+.rung{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;
+  padding:7px 8px 7px 10px;text-decoration:none;color:var(--ink-2);
+  border-left:0;margin-left:0;border-radius:6px;transition:all .18s ease}
+.rung:hover{background:var(--paper-2);color:var(--ink);transform:translateX(3px)}
+.rung.on{color:var(--ink);font-weight:900}
+.rung-num{font-family:var(--body);font-size:12px;font-weight:900;color:var(--muted);text-align:right}
+.rung.on .rung-num,.rung.done .rung-num{color:var(--ink)}
+.rung-body{display:block;min-width:0}
+.rung-name{display:block;font-family:var(--body);font-weight:900;font-size:13.5px;
+  letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rung-bar{display:block;height:4px;background:var(--rule);margin-top:5px;position:relative;border-radius:2px;overflow:hidden}
+.rung-bar i{position:absolute;inset:0 auto 0 0;background:var(--I);
+  transition:width .35s cubic-bezier(.2,.8,.2,1);border-radius:2px}
+.rung-count{font-family:var(--body);font-size:11px;font-weight:900;color:var(--muted);white-space:nowrap}
+.rung.done .rung-count{color:var(--I)}
+
+/* ---------- content ---------- */
+.main{padding-top:34px;min-width:0}
+.tier{padding:0 0 54px;scroll-margin-top:calc(var(--barH) + 22px)}
+.tier-head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:baseline;
+  padding-bottom:10px;border-bottom:2px solid var(--ink);margin-bottom:6px}
+.tier-num{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--muted);
+  letter-spacing:.06em}
+.tier-head h2{font-family:var(--disp);font-weight:900;font-size:clamp(22px,2.6vw,30px);
+  letter-spacing:-.02em;margin:0}
+.tier-prog{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted)}
+.tier-note{font-style:italic;font-weight:700;color:var(--ink-2);margin:12px 0 0;max-width:62ch;font-size:15px}
+.group{margin-top:26px}
+.grp{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 8px;
+  padding-bottom:6px;border-bottom:1.5px solid var(--rule)}
+.box, input[type="checkbox"], #reset, .meter, .tier-prog, .rung-count, .rung-bar { display: none !important; }
+
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.item{border-bottom:1px solid var(--rule-2);margin:0;padding:0}
+.item.hide{display:none}
+.item label{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;
+  padding:11px 12px;cursor:pointer;user-select:none;border-radius:6px;
+  transition:all .18s ease;background:transparent}
+.item label:hover{background:var(--paper-2);transform:translateX(4px)}
+.txt{padding-right:6px;font-weight:700;cursor:pointer;font-size:14.5px;color:var(--ink)}
+.txt code{font-family:var(--mono);font-size:.85em;font-weight:700;background:var(--paper-2);
+  padding:2px 6px;border-radius:3px;border:1px solid var(--rule)}
+.txt strong{font-weight:900}
+.tag{font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;
+  padding:4px 8px;border-radius:3px;color:#EDEFEA;margin-top:0;flex:none;
+  letter-spacing:.02em}
+.tag-I{background:var(--I)} .tag-C{background:var(--C)}
+.tag-B{background:var(--B)} .tag-O{background:var(--O)}
+.filter .tag{margin:0;padding:3px 4px}
+
+.drill-hint{font-family:var(--body);font-size:12px;font-weight:900;color:var(--ink);
+  display:inline-flex;align-items:center;gap:4px;background:var(--paper-2);
+  border:1px solid var(--rule-2);padding:4px 10px;border-radius:4px;
+  transition:all .18s ease}
+.item label:hover .drill-hint{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ---------- Centered Modal Drilldown ---------- */
+.drill-overlay{position:fixed;inset:0;background:rgba(22,24,26,0.68);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  z-index:999;opacity:0;pointer-events:none;transition:opacity .25s ease;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.drill-overlay.open{opacity:1;pointer-events:auto}
+
+.drill-modal{position:relative;width:min(740px, 94vw);max-height:86vh;background:var(--paper);
+  border:3px double var(--ink);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,0.4);
+  display:flex;flex-direction:column;overflow:hidden;transform:scale(0.94);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1);z-index:1000}
+.drill-overlay.open .drill-modal{transform:scale(1)}
+
+.drill-modal-header{padding:16px 22px;border-bottom:2px solid var(--rule);background:var(--paper-2);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0}
+.drill-crumb{font-family:var(--body);font-size:12px;font-weight:900;color:var(--muted);
+  letter-spacing:.05em;text-transform:uppercase}
+
+.modal-close-x{background:var(--paper);border:2px solid var(--ink);color:var(--ink);
+  width:32px;height:32px;border-radius:50%;font-size:16px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:all .18s ease;flex-shrink:0}
+.modal-close-x:hover{background:#e63946;color:#ffffff;border-color:#e63946;transform:scale(1.1) rotate(90deg)}
+
+.drill-title-bar{padding:18px 24px 14px;border-bottom:1px solid var(--rule-2);flex-shrink:0;background:var(--paper)}
+.drill-atom-title{margin:0 0 8px;font-size:19px;font-weight:900;color:var(--ink);line-height:1.35}
+.drill-atom-tags{display:flex;gap:8px;align-items:center}
+
+.drill-tabs{display:flex;gap:4px;padding:0 24px;border-bottom:1.5px solid var(--rule);
+  background:var(--paper-2);flex-shrink:0;overflow-x:auto}
+.drill-tab{padding:12px 16px;font-family:var(--body);font-size:12.5px;font-weight:900;
+  color:var(--muted);background:none;border:none;border-bottom:3px solid transparent;
+  cursor:pointer;white-space:nowrap;transition:all .18s ease}
+.drill-tab:hover{color:var(--ink)}
+.drill-tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+
+.drill-body{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:18px}
+
+.drill-card{display:flex;flex-direction:column;gap:14px}
+.drill-sec-h{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--ink);margin:0 0 6px;border-bottom:1px solid var(--rule-2);padding-bottom:4px}
+.drill-p{margin:0;color:var(--ink-2);font-weight:600;line-height:1.6}
+.drill-list{margin:0;padding-left:20px;color:var(--ink-2);font-weight:600;line-height:1.6}
+.drill-list li{margin-bottom:6px}
+.drill-code{background:#1E1E1E;color:#D4D4D4;padding:14px 18px;border-radius:6px;
+  overflow-x:auto;font-family:monospace;font-size:12.5px;line-height:1.5;margin:8px 0}
+.drill-qa{display:flex;flex-direction:column;gap:10px}
+.drill-qa-item{padding:10px 14px;background:var(--paper-2);border-radius:4px;border-left:3px solid var(--ink)}
+.drill-qa-q{font-weight:900;color:var(--ink);margin:0 0 4px}
+.drill-qa-a{font-weight:600;color:var(--ink-2);margin:0}
+
+/* ---------- tail ---------- */
+.tail{border-top:2px solid var(--ink);margin-top:48px;padding-top:56px;max-width:78ch;
+  clear:both}
+.tail-h{font-family:var(--disp);font-weight:900;font-size:clamp(24px,3.2vw,36px);
+  letter-spacing:-.025em;margin:44px 0 20px}
+.tail-h:first-child{margin-top:0}
+.tail p{max-width:66ch;color:var(--ink-2);font-weight:700}
+.tail table{width:100%;border-collapse:collapse;margin:18px 0 8px;font-size:14px}
+.tail th{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:0 12px 8px 0;border-bottom:2px solid var(--ink);
+  font-weight:700}
+.tail td{padding:9px 12px 9px 0;border-bottom:1px solid var(--rule);vertical-align:top;font-weight:700}
+.tail td:first-child,.tail td:last-child{font-family:var(--mono);font-size:13px;
+  white-space:nowrap;color:var(--muted);font-weight:700}
+.rules{list-style:none;counter-reset:r;margin:22px 0 0;padding:0}
+.rules li{counter-increment:r;position:relative;padding:0 0 22px 46px;max-width:68ch;
+  color:var(--ink-2);font-weight:700}
+.rules li::before{content:counter(r,decimal-leading-zero);position:absolute;left:0;top:1px;
+  font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--muted);
+  border:1.5px solid var(--rule-2);padding:3px 6px;border-radius:2px}
+.rules strong{color:var(--ink);font-weight:900}
+.rules em{color:var(--ink)}
+
+.foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--muted);display:flex;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* ---------- responsive ---------- */
+@media (max-width:1040px){
+  .shell{padding:0 20px 72px}
+  .cols{display:block}
+  /* wrapper dissolves, so .rail's containing block becomes the tall .cols block
+     and sticky keeps its full scroll travel */
+  .rail-col{display:contents}
+  .rail{top:var(--barH);z-index:30;background:var(--paper);
+    border-bottom:1px solid var(--rule);margin:0 -20px;padding:10px 20px}
+  .rail-h{display:none}
+  .tier{scroll-margin-top:calc(var(--barH) + var(--railH) + 14px)}
+  .tail{margin-top:24px}
+  .rungs{flex-direction:row;overflow-x:auto;border-left:0;gap:6px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .rungs::-webkit-scrollbar{display:none}
+  .rung{grid-template-columns:auto;gap:4px;border-left:0;border-bottom:2px solid transparent;
+    min-width:118px;padding:6px 8px;margin:0;background:var(--paper-2)}
+  .rung.on{border-left-color:transparent;border-bottom-color:var(--ink)}
+  .rung-num{text-align:left}
+  .rung-count{font-size:9.5px}
+  .main{padding-top:28px}
+  .mast{padding-top:40px}
+}
+@media (max-width:640px){
+  body{font-size:15px}
+  .bar-in{padding:8px 20px;gap:12px}
+  .brand{font-size:12px}
+  .filter-txt{display:none}
+  .tier-head{grid-template-columns:auto 1fr;row-gap:4px}
+  .tier-prog{grid-column:2}
+  .title-photo{width:80px;height:80px}
+}
+@media print{
+  .bar,.rail,.foot{display:none}
+  .shell{grid-template-columns:1fr;padding:0}
+  body{background:#fff;font-size:10.5pt}
+  .tier{break-inside:auto;padding-bottom:24px}
+  .item{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <span class="brand">DSA / 395</span>
+    <span class="meter">
+      <span class="meter-track"><i id="meterFill"></i></span>
+      <span class="meter-num"><b id="meterDone">0</b> / 395 &nbsp;·&nbsp; <b id="meterPct">0%</b></span>
+    </span>
+    <span class="filters"><button class="filter" data-filter="I"><span class="tag tag-I">I</span><span class="filter-txt">Interview-critical — appears in FAANG/product-company rounds</span></button><button class="filter" data-filter="C"><span class="tag tag-C">C</span><span class="filter-txt">Codeforces / ICPC territory — rarely asked in interviews</span></button><button class="filter" data-filter="B"><span class="tag tag-B">B</span><span class="filter-txt">Both, heavily</span></button><button class="filter" data-filter="O"><span class="tag tag-O">O</span><span class="filter-txt">Optional — only if you have time or are chasing rating</span></button></span>
+    <button class="ghost" id="reset">reset</button>
+  </div>
+</div>
+
+<div class="shell">
+  <header class="mast">
+    <div class="mast-title">
+      <img src="dsa_title_photo.png" alt="DSA Classic Manuscript & Study Desk" class="title-photo">
+      <h1>DSA — Complete Atomic Breakdown</h1>
+    </div>
+    <p class="howto"><strong>How to use this:</strong> each line is one sitting (60–120 min: learn the idea → implement from scratch once → solve 3–8 problems). Tick it only when you can re-implement it from a blank file without reference.</p><p class="total"><strong>Total: 395 atoms.</strong> At 2/day that&#x27;s ~6.5 months. At 1/day, ~13 months.</p>
+  </header>
+
+  <div class="cols">
+    <div class="rail-col">
+      <nav class="rail" aria-label="Tiers">
+        <p class="rail-h">Tiers</p>
+        <div class="rungs-wrapper">
+          <div class="line-sidebar-track"></div>
+          <div class="line-sidebar-active" id="lineActive"></div>
+          <div class="line-sidebar-hover" id="lineHover"></div>
+          <div class="rungs"><a class="rung" href="#tier-0" data-tier="0"><span class="rung-num">0</span><span class="rung-body"><span class="rung-name">Foundations</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/18</span></a><a class="rung" href="#tier-1" data-tier="1"><span class="rung-num">1</span><span class="rung-body"><span class="rung-name">Arrays &amp; Searching</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/41</span></a><a class="rung" href="#tier-2" data-tier="2"><span class="rung-num">2</span><span class="rung-body"><span class="rung-name">Hashing &amp; Strings</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/27</span></a><a class="rung" href="#tier-3" data-tier="3"><span class="rung-num">3</span><span class="rung-body"><span class="rung-name">Linear Data Structures</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/26</span></a><a class="rung" href="#tier-4" data-tier="4"><span class="rung-num">4</span><span class="rung-body"><span class="rung-name">Heaps &amp; Priority Queues</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/10</span></a><a class="rung" href="#tier-5" data-tier="5"><span class="rung-num">5</span><span class="rung-body"><span class="rung-name">Recursion &amp; Backtracking</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/15</span></a><a class="rung" href="#tier-6" data-tier="6"><span class="rung-num">6</span><span class="rung-body"><span class="rung-name">Trees</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/54</span></a><a class="rung" href="#tier-7" data-tier="7"><span class="rung-num">7</span><span class="rung-body"><span class="rung-name">Graphs</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/45</span></a><a class="rung" href="#tier-8" data-tier="8"><span class="rung-num">8</span><span class="rung-body"><span class="rung-name">Dynamic Programming</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/75</span></a><a class="rung" href="#tier-9" data-tier="9"><span class="rung-num">9</span><span class="rung-body"><span class="rung-name">Greedy</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/15</span></a><a class="rung" href="#tier-10" data-tier="10"><span class="rung-num">10</span><span class="rung-body"><span class="rung-name">Bit Manipulation</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/15</span></a><a class="rung" href="#tier-11" data-tier="11"><span class="rung-num">11</span><span class="rung-body"><span class="rung-name">Math &amp; Number Theory</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/30</span></a><a class="rung" href="#tier-12" data-tier="12"><span class="rung-num">12</span><span class="rung-body"><span class="rung-name">Specialized</span><span class="rung-bar"><i style="width:0%"></i></span></span><span class="rung-count"><b>0</b>/24</span></a></div>
+        </div>
+      </nav>
+    </div>
+
+    <main class="main">
+      <section class="tier" id="tier-0" data-tier="0"><header class="tier-head"><span class="tier-num">0</span><h2>Foundations</h2><span class="tier-prog"><b>0</b> / 18</span></header><p class="tier-note">Skipping this is the single most common reason people plateau at &quot;I can solve it but not analyze it.&quot;</p><section class="group"><h3 class="grp">0.1 Complexity</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-0"><span class="box" aria-hidden="true"></span><span class="txt">Big-O, Big-Θ, Big-Ω — what each actually bounds</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-1"><span class="box" aria-hidden="true"></span><span class="txt">Deriving time complexity of loops, nested loops, and loop-with-halving</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-2"><span class="box" aria-hidden="true"></span><span class="txt">Recursion tree method — solving <code>T(n) = aT(n/b) + f(n)</code> by hand</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-3"><span class="box" aria-hidden="true"></span><span class="txt">Master theorem — the three cases and when it doesn&#x27;t apply</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-4"><span class="box" aria-hidden="true"></span><span class="txt">Amortized analysis — vector doubling, why <code>push_back</code> is O(1) amortized</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-5"><span class="box" aria-hidden="true"></span><span class="txt">Space complexity including recursion stack depth</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-6"><span class="box" aria-hidden="true"></span><span class="txt">Operations-per-second budget: mapping constraints → required complexity (n ≤ 10⁵ → O(n log n), n ≤ 20 → exponential OK)</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">0.2 Language toolkit (C++ assumed)</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-7"><span class="box" aria-hidden="true"></span><span class="txt"><code>vector</code>, <code>array</code>, <code>string</code> — capacity vs size, reserve, resize</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-8"><span class="box" aria-hidden="true"></span><span class="txt"><code>pair</code>, <code>tuple</code>, structured bindings</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-9"><span class="box" aria-hidden="true"></span><span class="txt">Iterators, range-for, <code>auto</code>, references vs copies in loops</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-10"><span class="box" aria-hidden="true"></span><span class="txt"><code>sort</code> with lambda comparators; strict weak ordering rules</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-11"><span class="box" aria-hidden="true"></span><span class="txt"><code>lower_bound</code> / <code>upper_bound</code> / <code>binary_search</code> on vectors</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-12"><span class="box" aria-hidden="true"></span><span class="txt"><code>map</code> vs <code>unordered_map</code> vs <code>set</code> vs <code>unordered_set</code> — complexity and when each breaks</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-13"><span class="box" aria-hidden="true"></span><span class="txt"><code>priority_queue</code> with custom comparator (and why the comparator feels inverted)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-14"><span class="box" aria-hidden="true"></span><span class="txt"><code>deque</code>, <code>stack</code>, <code>queue</code> adapters</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t0-15"><span class="box" aria-hidden="true"></span><span class="txt">Fast I/O: <code>sync_with_stdio(false)</code>, <code>cin.tie(nullptr)</code></span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t0-16"><span class="box" aria-hidden="true"></span><span class="txt">Overflow: <code>int</code> vs <code>long long</code>, when to cast mid-expression</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t0-17"><span class="box" aria-hidden="true"></span><span class="txt">Custom hash for <code>unordered_map</code> (anti-hash-attack)</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section></section><section class="tier" id="tier-1" data-tier="1"><header class="tier-head"><span class="tier-num">1</span><h2>Arrays &amp; Searching</h2><span class="tier-prog"><b>0</b> / 41</span></header><section class="group"><h3 class="grp">1.1 Prefix techniques</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-18"><span class="box" aria-hidden="true"></span><span class="txt">1D prefix sum — range sum in O(1)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-19"><span class="box" aria-hidden="true"></span><span class="txt">Prefix XOR, prefix product, prefix max</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-20"><span class="box" aria-hidden="true"></span><span class="txt">2D prefix sum (integral image) — submatrix sum</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-21"><span class="box" aria-hidden="true"></span><span class="txt">Difference array — range update, point query</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t1-22"><span class="box" aria-hidden="true"></span><span class="txt">2D difference array</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-23"><span class="box" aria-hidden="true"></span><span class="txt">Prefix sum + hashmap — subarray sum equals K, count subarrays</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-24"><span class="box" aria-hidden="true"></span><span class="txt">Prefix sum with modular arithmetic — subarrays divisible by K</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">1.2 Two pointers</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-25"><span class="box" aria-hidden="true"></span><span class="txt">Opposite-direction (converging) on sorted arrays — 2Sum, container with most water</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-26"><span class="box" aria-hidden="true"></span><span class="txt">Same-direction (fast/slow) — remove duplicates, move zeroes</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-27"><span class="box" aria-hidden="true"></span><span class="txt">3Sum, 4Sum, and the duplicate-skipping discipline</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-28"><span class="box" aria-hidden="true"></span><span class="txt">Merging two sorted arrays in place / from the back</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-29"><span class="box" aria-hidden="true"></span><span class="txt">Partition (Dutch national flag / sort colors)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">1.3 Sliding window</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-30"><span class="box" aria-hidden="true"></span><span class="txt">Fixed-size window</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-31"><span class="box" aria-hidden="true"></span><span class="txt">Variable-size window — shrink-while-invalid template</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-32"><span class="box" aria-hidden="true"></span><span class="txt">&quot;At most K&quot; minus &quot;at most K−1&quot; = &quot;exactly K&quot; trick</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-33"><span class="box" aria-hidden="true"></span><span class="txt">Window with frequency map (longest substring without repeats, anagram search)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-34"><span class="box" aria-hidden="true"></span><span class="txt">Window + monotonic deque (sliding window maximum)</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">1.4 Binary search</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-35"><span class="box" aria-hidden="true"></span><span class="txt">On a sorted array — and getting the <code>while (lo &lt; hi)</code> invariant right every time</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-36"><span class="box" aria-hidden="true"></span><span class="txt">Lower bound / upper bound / first-true implemented by hand</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-37"><span class="box" aria-hidden="true"></span><span class="txt">Binary search on a rotated sorted array (with and without duplicates)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-38"><span class="box" aria-hidden="true"></span><span class="txt">Search in 2D matrix (row-sorted, fully sorted variants)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-39"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Binary search on the answer</strong> — identify the monotone predicate</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-40"><span class="box" aria-hidden="true"></span><span class="txt">Minimize-the-maximum problems (split array, ship packages, Koko bananas)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t1-41"><span class="box" aria-hidden="true"></span><span class="txt">Binary search on real numbers (fixed iteration count, not epsilon)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-42"><span class="box" aria-hidden="true"></span><span class="txt">Median of two sorted arrays (partition binary search)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t1-43"><span class="box" aria-hidden="true"></span><span class="txt">Ternary search on unimodal functions</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">1.5 Sorting</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-44"><span class="box" aria-hidden="true"></span><span class="txt">Merge sort — and counting inversions with it</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-45"><span class="box" aria-hidden="true"></span><span class="txt">Quick sort, Lomuto vs Hoare partition, worst case</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-46"><span class="box" aria-hidden="true"></span><span class="txt">Quickselect — kth largest in O(n) average</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-47"><span class="box" aria-hidden="true"></span><span class="txt">Counting sort, radix sort, bucket sort — when O(n) beats O(n log n)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-48"><span class="box" aria-hidden="true"></span><span class="txt">Stability — what it means and which problems need it</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-49"><span class="box" aria-hidden="true"></span><span class="txt">Custom multi-key sorting</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-50"><span class="box" aria-hidden="true"></span><span class="txt">Cyclic sort / index-as-hash (find missing &amp; duplicate in O(n), O(1) space)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">1.6 Intervals</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-51"><span class="box" aria-hidden="true"></span><span class="txt">Merge overlapping intervals</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-52"><span class="box" aria-hidden="true"></span><span class="txt">Insert interval</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-53"><span class="box" aria-hidden="true"></span><span class="txt">Non-overlapping intervals / max meetings (greedy by end time)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t1-54"><span class="box" aria-hidden="true"></span><span class="txt">Sweep line with event points (min platforms, max concurrent)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-55"><span class="box" aria-hidden="true"></span><span class="txt">Interval intersection of two lists</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">1.7 Matrix manipulation</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-56"><span class="box" aria-hidden="true"></span><span class="txt">Spiral traversal</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-57"><span class="box" aria-hidden="true"></span><span class="txt">Rotate 90° in place (transpose + reverse)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t1-58"><span class="box" aria-hidden="true"></span><span class="txt">Set matrix zeroes in O(1) space</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section></section><section class="tier" id="tier-2" data-tier="2"><header class="tier-head"><span class="tier-num">2</span><h2>Hashing &amp; Strings</h2><span class="tier-prog"><b>0</b> / 27</span></header><section class="group"><h3 class="grp">2.1 Hashing</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-59"><span class="box" aria-hidden="true"></span><span class="txt">Hash map / hash set fundamentals: buckets, collisions, load factor</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-60"><span class="box" aria-hidden="true"></span><span class="txt">Frequency maps and counting patterns</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-61"><span class="box" aria-hidden="true"></span><span class="txt">Grouping by canonical key (group anagrams)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-62"><span class="box" aria-hidden="true"></span><span class="txt">Hashing a pair / vector / custom struct</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-63"><span class="box" aria-hidden="true"></span><span class="txt">Longest consecutive sequence in O(n)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-64"><span class="box" aria-hidden="true"></span><span class="txt">Design: implement a hash map with chaining and with open addressing</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">2.2 String basics</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-65"><span class="box" aria-hidden="true"></span><span class="txt">Character frequency, anagram checks</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-66"><span class="box" aria-hidden="true"></span><span class="txt">Palindrome check, two-pointer expansion, longest palindromic substring O(n²)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-67"><span class="box" aria-hidden="true"></span><span class="txt">String reversal, word reversal, in-place variants</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-68"><span class="box" aria-hidden="true"></span><span class="txt">Roman numerals, atoi, string-to-number parsing edge cases</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-69"><span class="box" aria-hidden="true"></span><span class="txt">Run-length / string compression</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-70"><span class="box" aria-hidden="true"></span><span class="txt">Comparator-based string sorting (largest number formed)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">2.3 Pattern matching</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-71"><span class="box" aria-hidden="true"></span><span class="txt">Naive O(n·m) matching — and why it&#x27;s O(n·m)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-72"><span class="box" aria-hidden="true"></span><span class="txt"><strong>KMP</strong> — building the prefix function π, then matching</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-73"><span class="box" aria-hidden="true"></span><span class="txt">Applications of π: shortest period, count occurrences, prefix-suffix</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-74"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Z-function</strong> — construction and use</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-75"><span class="box" aria-hidden="true"></span><span class="txt">Rabin-Karp rolling hash</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t2-76"><span class="box" aria-hidden="true"></span><span class="txt">Polynomial string hashing with double mod (collision-resistant)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t2-77"><span class="box" aria-hidden="true"></span><span class="txt">Manacher&#x27;s algorithm — all palindromic substrings in O(n)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t2-78"><span class="box" aria-hidden="true"></span><span class="txt">Suffix array + LCP (Kasai)</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t2-79"><span class="box" aria-hidden="true"></span><span class="txt">Aho-Corasick (multi-pattern)</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section><section class="group"><h3 class="grp">2.4 Trie</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-80"><span class="box" aria-hidden="true"></span><span class="txt">Trie insert / search / startsWith</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-81"><span class="box" aria-hidden="true"></span><span class="txt">Trie with count-of-prefix and count-of-word</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-82"><span class="box" aria-hidden="true"></span><span class="txt">Delete from trie</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t2-83"><span class="box" aria-hidden="true"></span><span class="txt">Word search II (trie + DFS on grid)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t2-84"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Binary trie / XOR trie</strong> — maximum XOR pair, max XOR with constraint</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t2-85"><span class="box" aria-hidden="true"></span><span class="txt">Persistent trie</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section></section><section class="tier" id="tier-3" data-tier="3"><header class="tier-head"><span class="tier-num">3</span><h2>Linear Data Structures</h2><span class="tier-prog"><b>0</b> / 26</span></header><section class="group"><h3 class="grp">3.1 Linked list</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-86"><span class="box" aria-hidden="true"></span><span class="txt">Singly LL: insert, delete, traverse</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-87"><span class="box" aria-hidden="true"></span><span class="txt">Reverse iteratively and recursively</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-88"><span class="box" aria-hidden="true"></span><span class="txt">Reverse in groups of K</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-89"><span class="box" aria-hidden="true"></span><span class="txt">Middle node (slow/fast), Nth from end</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-90"><span class="box" aria-hidden="true"></span><span class="txt">Floyd&#x27;s cycle detection + finding cycle start (know the proof)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-91"><span class="box" aria-hidden="true"></span><span class="txt">Merge two sorted lists; merge K sorted lists</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-92"><span class="box" aria-hidden="true"></span><span class="txt">Intersection of two lists</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-93"><span class="box" aria-hidden="true"></span><span class="txt">Palindrome linked list in O(1) space</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-94"><span class="box" aria-hidden="true"></span><span class="txt">Copy list with random pointer</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-95"><span class="box" aria-hidden="true"></span><span class="txt">Doubly linked list operations</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-96"><span class="box" aria-hidden="true"></span><span class="txt">Flatten a multilevel / nested list</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">3.2 Stack</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t3-97"><span class="box" aria-hidden="true"></span><span class="txt">Stack via array and via linked list</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-98"><span class="box" aria-hidden="true"></span><span class="txt">Valid parentheses, min-add-to-make-valid</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-99"><span class="box" aria-hidden="true"></span><span class="txt">Min stack in O(1)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-100"><span class="box" aria-hidden="true"></span><span class="txt">Infix → postfix → prefix conversion, expression evaluation</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t3-101"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Monotonic stack</strong> — next/previous greater/smaller element (all 4 variants)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-102"><span class="box" aria-hidden="true"></span><span class="txt">Largest rectangle in histogram</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-103"><span class="box" aria-hidden="true"></span><span class="txt">Maximal rectangle in binary matrix</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-104"><span class="box" aria-hidden="true"></span><span class="txt">Trapping rain water (stack and two-pointer solutions)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-105"><span class="box" aria-hidden="true"></span><span class="txt">Stock span, daily temperatures</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t3-106"><span class="box" aria-hidden="true"></span><span class="txt">Sum of subarray minimums (contribution technique)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-107"><span class="box" aria-hidden="true"></span><span class="txt">Remove K digits / build lexicographically smallest</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-108"><span class="box" aria-hidden="true"></span><span class="txt">Stack using queues, queue using stacks</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">3.3 Queue &amp; deque</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-109"><span class="box" aria-hidden="true"></span><span class="txt">Circular queue implementation</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t3-110"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Monotonic deque</strong> — sliding window min/max</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t3-111"><span class="box" aria-hidden="true"></span><span class="txt">First non-repeating character in a stream</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section></section><section class="tier" id="tier-4" data-tier="4"><header class="tier-head"><span class="tier-num">4</span><h2>Heaps &amp; Priority Queues</h2><span class="tier-prog"><b>0</b> / 10</span></header><section class="group"><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t4-112"><span class="box" aria-hidden="true"></span><span class="txt">Binary heap structure, sift-up, sift-down</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t4-113"><span class="box" aria-hidden="true"></span><span class="txt">Build-heap in O(n) — and why it&#x27;s not O(n log n)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t4-114"><span class="box" aria-hidden="true"></span><span class="txt">Heap sort</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-115"><span class="box" aria-hidden="true"></span><span class="txt">Kth largest / smallest with a size-K heap</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-116"><span class="box" aria-hidden="true"></span><span class="txt">Top K frequent elements</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-117"><span class="box" aria-hidden="true"></span><span class="txt">K-way merge (merge K sorted lists/arrays)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-118"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Two heaps</strong> — running median</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-119"><span class="box" aria-hidden="true"></span><span class="txt">Task scheduler / CPU scheduling with heap</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t4-120"><span class="box" aria-hidden="true"></span><span class="txt">Heap + greedy: connect ropes, minimum cost problems</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t4-121"><span class="box" aria-hidden="true"></span><span class="txt">Indexed / decrease-key priority queue (for Dijkstra)</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section></section><section class="tier" id="tier-5" data-tier="5"><header class="tier-head"><span class="tier-num">5</span><h2>Recursion &amp; Backtracking</h2><span class="tier-prog"><b>0</b> / 15</span></header><section class="group"><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t5-122"><span class="box" aria-hidden="true"></span><span class="txt">Recursion mental model: trust the recursive call, define the contract</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t5-123"><span class="box" aria-hidden="true"></span><span class="txt">Recursion on subsequences — pick / don&#x27;t-pick tree</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-124"><span class="box" aria-hidden="true"></span><span class="txt">Subsets (power set) — recursive and bitmask iterative</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-125"><span class="box" aria-hidden="true"></span><span class="txt">Subsets with duplicates</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-126"><span class="box" aria-hidden="true"></span><span class="txt">Permutations — swap method and used-array method</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-127"><span class="box" aria-hidden="true"></span><span class="txt">Permutations with duplicates</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-128"><span class="box" aria-hidden="true"></span><span class="txt">Combination sum I / II / III</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-129"><span class="box" aria-hidden="true"></span><span class="txt">Next permutation (the algorithm, not brute force)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-130"><span class="box" aria-hidden="true"></span><span class="txt">N-Queens with column/diagonal pruning</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-131"><span class="box" aria-hidden="true"></span><span class="txt">Sudoku solver</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-132"><span class="box" aria-hidden="true"></span><span class="txt">Rat in maze / word search in grid</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-133"><span class="box" aria-hidden="true"></span><span class="txt">Palindrome partitioning</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-134"><span class="box" aria-hidden="true"></span><span class="txt">Graph coloring / M-coloring</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t5-135"><span class="box" aria-hidden="true"></span><span class="txt">Generating balanced parentheses</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t5-136"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Meet in the middle</strong> — 2^(n/2) instead of 2^n</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section></section><section class="tier" id="tier-6" data-tier="6"><header class="tier-head"><span class="tier-num">6</span><h2>Trees</h2><span class="tier-prog"><b>0</b> / 54</span></header><section class="group"><h3 class="grp">6.1 Binary tree fundamentals</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-137"><span class="box" aria-hidden="true"></span><span class="txt">Preorder / inorder / postorder — recursive</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-138"><span class="box" aria-hidden="true"></span><span class="txt">All three iteratively (one-stack)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-139"><span class="box" aria-hidden="true"></span><span class="txt">Morris traversal — O(1) space inorder</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-140"><span class="box" aria-hidden="true"></span><span class="txt">Level order BFS</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-141"><span class="box" aria-hidden="true"></span><span class="txt">Zigzag / spiral level order</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-142"><span class="box" aria-hidden="true"></span><span class="txt">Left view, right view, top view, bottom view</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-143"><span class="box" aria-hidden="true"></span><span class="txt">Vertical order traversal</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-144"><span class="box" aria-hidden="true"></span><span class="txt">Height, depth, count nodes, count leaves</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-145"><span class="box" aria-hidden="true"></span><span class="txt">Diameter of a binary tree</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-146"><span class="box" aria-hidden="true"></span><span class="txt">Balanced tree check</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-147"><span class="box" aria-hidden="true"></span><span class="txt">Maximum path sum (any node to any node)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-148"><span class="box" aria-hidden="true"></span><span class="txt">Root-to-node path, all root-to-leaf paths</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-149"><span class="box" aria-hidden="true"></span><span class="txt">Symmetric tree, identical trees, subtree check</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-150"><span class="box" aria-hidden="true"></span><span class="txt">Construct from preorder+inorder, postorder+inorder</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-151"><span class="box" aria-hidden="true"></span><span class="txt">Serialize / deserialize</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-152"><span class="box" aria-hidden="true"></span><span class="txt">Flatten to linked list</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-153"><span class="box" aria-hidden="true"></span><span class="txt">Nodes at distance K, burning tree (parent pointers + BFS)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-154"><span class="box" aria-hidden="true"></span><span class="txt">Boundary traversal</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">6.2 BST</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-155"><span class="box" aria-hidden="true"></span><span class="txt">Search, insert, delete (all three delete cases)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-156"><span class="box" aria-hidden="true"></span><span class="txt">Validate BST (range method)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-157"><span class="box" aria-hidden="true"></span><span class="txt">Kth smallest / largest</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-158"><span class="box" aria-hidden="true"></span><span class="txt">Inorder predecessor and successor</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-159"><span class="box" aria-hidden="true"></span><span class="txt">Floor and ceil</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-160"><span class="box" aria-hidden="true"></span><span class="txt">LCA in a BST</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-161"><span class="box" aria-hidden="true"></span><span class="txt">BST iterator (controlled recursion)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-162"><span class="box" aria-hidden="true"></span><span class="txt">Construct BST from preorder</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-163"><span class="box" aria-hidden="true"></span><span class="txt">Two-sum in BST</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-164"><span class="box" aria-hidden="true"></span><span class="txt">Recover BST with two swapped nodes</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-165"><span class="box" aria-hidden="true"></span><span class="txt">Largest BST subtree</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-166"><span class="box" aria-hidden="true"></span><span class="txt">Self-balancing: AVL rotations, red-black tree invariants (conceptual)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">6.3 LCA &amp; tree queries</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t6-167"><span class="box" aria-hidden="true"></span><span class="txt">LCA in a binary tree (naive recursive)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-168"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Binary lifting</strong> — sparse ancestor table, LCA in O(log n)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-169"><span class="box" aria-hidden="true"></span><span class="txt">Kth ancestor via binary lifting</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-170"><span class="box" aria-hidden="true"></span><span class="txt">Euler tour flattening — subtree → contiguous range</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-171"><span class="box" aria-hidden="true"></span><span class="txt">LCA via Euler tour + sparse table (O(1) query)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-172"><span class="box" aria-hidden="true"></span><span class="txt">Distance between two nodes</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">6.4 Range query structures</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-173"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Fenwick tree (BIT)</strong> — point update, prefix query</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-174"><span class="box" aria-hidden="true"></span><span class="txt">BIT for range update + point query</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-175"><span class="box" aria-hidden="true"></span><span class="txt">BIT for range update + range query (two-BIT trick)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-176"><span class="box" aria-hidden="true"></span><span class="txt">2D BIT</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-177"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Segment tree</strong> — build, point update, range query</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-178"><span class="box" aria-hidden="true"></span><span class="txt">Segment tree with lazy propagation (range update)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-179"><span class="box" aria-hidden="true"></span><span class="txt">Segment tree for non-trivial merges (max subarray sum, GCD, count of max)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-180"><span class="box" aria-hidden="true"></span><span class="txt">Descend-on-segment-tree (find first index ≥ x)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-181"><span class="box" aria-hidden="true"></span><span class="txt">Merge sort tree</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-182"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Sparse table</strong> — idempotent range queries (RMQ, GCD) in O(1)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-183"><span class="box" aria-hidden="true"></span><span class="txt">Sqrt decomposition</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t6-184"><span class="box" aria-hidden="true"></span><span class="txt">Persistent segment tree</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t6-185"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Mo&#x27;s algorithm</strong> — offline query reordering</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section><section class="group"><h3 class="grp">6.5 Advanced tree</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t6-186"><span class="box" aria-hidden="true"></span><span class="txt">Tree DP — subtree aggregation</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-187"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Rerooting technique</strong> — answers for all roots in O(n)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t6-188"><span class="box" aria-hidden="true"></span><span class="txt">Small-to-large merging</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t6-189"><span class="box" aria-hidden="true"></span><span class="txt">Heavy-light decomposition</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t6-190"><span class="box" aria-hidden="true"></span><span class="txt">Centroid decomposition</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section></section><section class="tier" id="tier-7" data-tier="7"><header class="tier-head"><span class="tier-num">7</span><h2>Graphs</h2><span class="tier-prog"><b>0</b> / 45</span></header><section class="group"><h3 class="grp">7.1 Representation &amp; traversal</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-191"><span class="box" aria-hidden="true"></span><span class="txt">Adjacency list vs matrix vs edge list — memory/time tradeoffs</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-192"><span class="box" aria-hidden="true"></span><span class="txt">DFS recursive and iterative</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-193"><span class="box" aria-hidden="true"></span><span class="txt">BFS</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-194"><span class="box" aria-hidden="true"></span><span class="txt">Connected components count</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-195"><span class="box" aria-hidden="true"></span><span class="txt">Grid-as-graph: flood fill, number of islands, rotting oranges</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-196"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Multi-source BFS</strong></span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-197"><span class="box" aria-hidden="true"></span><span class="txt">BFS shortest path in unweighted graph + path reconstruction</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-198"><span class="box" aria-hidden="true"></span><span class="txt"><strong>0-1 BFS</strong> with a deque</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-199"><span class="box" aria-hidden="true"></span><span class="txt">Bipartite check / 2-coloring (BFS and DFS)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-200"><span class="box" aria-hidden="true"></span><span class="txt">Cycle detection in undirected graph</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-201"><span class="box" aria-hidden="true"></span><span class="txt">Cycle detection in directed graph (recursion-stack / colors)</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">7.2 Ordering</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-202"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Topological sort</strong> — Kahn&#x27;s (BFS, indegree)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-203"><span class="box" aria-hidden="true"></span><span class="txt">Topological sort — DFS finish-time</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-204"><span class="box" aria-hidden="true"></span><span class="txt">Course schedule I/II, alien dictionary</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-205"><span class="box" aria-hidden="true"></span><span class="txt">Shortest &amp; longest path in a DAG via topo order</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">7.3 Shortest paths</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-206"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Dijkstra</strong> with priority queue</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-207"><span class="box" aria-hidden="true"></span><span class="txt">Dijkstra path reconstruction; why it fails on negative edges</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-208"><span class="box" aria-hidden="true"></span><span class="txt">Dijkstra on implicit/state graphs (state = node × extra dimension)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-209"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Bellman-Ford</strong> + negative cycle detection</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-210"><span class="box" aria-hidden="true"></span><span class="txt">SPFA (queue-based Bellman-Ford)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-211"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Floyd-Warshall</strong> all-pairs</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-212"><span class="box" aria-hidden="true"></span><span class="txt">Transitive closure</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-213"><span class="box" aria-hidden="true"></span><span class="txt">Johnson&#x27;s algorithm</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section><section class="group"><h3 class="grp">7.4 Disjoint Set Union</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-214"><span class="box" aria-hidden="true"></span><span class="txt">DSU with union by size/rank</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-215"><span class="box" aria-hidden="true"></span><span class="txt">Path compression — and the α(n) result</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-216"><span class="box" aria-hidden="true"></span><span class="txt">DSU for connected components, redundant connection, accounts merge</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t7-217"><span class="box" aria-hidden="true"></span><span class="txt">DSU on grid (islands II, dynamic connectivity)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-218"><span class="box" aria-hidden="true"></span><span class="txt">DSU with rollback / offline dynamic connectivity</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-219"><span class="box" aria-hidden="true"></span><span class="txt">Weighted DSU (parity / relations)</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">7.5 Minimum spanning tree</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-220"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Kruskal&#x27;s</strong> (sort edges + DSU)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t7-221"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Prim&#x27;s</strong> (PQ-based)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-222"><span class="box" aria-hidden="true"></span><span class="txt">MST uniqueness, second-best MST</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">7.6 Connectivity structure</h3><ul class="items"><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-223"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Bridges</strong> (Tarjan, low-link values)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-224"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Articulation points</strong></span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-225"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Strongly connected components</strong> — Kosaraju</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-226"><span class="box" aria-hidden="true"></span><span class="txt">SCC — Tarjan</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-227"><span class="box" aria-hidden="true"></span><span class="txt">Condensation graph + DP on it</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-228"><span class="box" aria-hidden="true"></span><span class="txt"><strong>2-SAT</strong> via implication graph + SCC</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-229"><span class="box" aria-hidden="true"></span><span class="txt">Eulerian path / circuit (Hierholzer)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-230"><span class="box" aria-hidden="true"></span><span class="txt">Hamiltonian path (bitmask DP)</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">7.7 Flows &amp; matching</h3><ul class="items"><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-231"><span class="box" aria-hidden="true"></span><span class="txt">Max-flow concept, residual graphs, Ford-Fulkerson</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-232"><span class="box" aria-hidden="true"></span><span class="txt">Edmonds-Karp, Dinic&#x27;s</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t7-233"><span class="box" aria-hidden="true"></span><span class="txt">Max-flow min-cut theorem</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-234"><span class="box" aria-hidden="true"></span><span class="txt">Bipartite matching (Kuhn&#x27;s / Hungarian)</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t7-235"><span class="box" aria-hidden="true"></span><span class="txt">Min-cost max-flow</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section></section><section class="tier" id="tier-8" data-tier="8"><header class="tier-head"><span class="tier-num">8</span><h2>Dynamic Programming</h2><span class="tier-prog"><b>0</b> / 75</span></header><p class="tier-note">The largest tier by a wide margin. Do it in this order — each block reuses the previous.</p><section class="group"><h3 class="grp">8.1 Foundations</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-236"><span class="box" aria-hidden="true"></span><span class="txt">Overlapping subproblems vs optimal substructure — how to spot them</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-237"><span class="box" aria-hidden="true"></span><span class="txt"><strong>The pipeline</strong>: recursion → memoization → tabulation → space optimization. Practice all four on the same problem.</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-238"><span class="box" aria-hidden="true"></span><span class="txt">State design: what goes in the state, what doesn&#x27;t</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-239"><span class="box" aria-hidden="true"></span><span class="txt">Transition design and base cases</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-240"><span class="box" aria-hidden="true"></span><span class="txt">Path reconstruction from a DP table</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">8.2 1D DP</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-241"><span class="box" aria-hidden="true"></span><span class="txt">Fibonacci, climbing stairs, min cost climbing stairs</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-242"><span class="box" aria-hidden="true"></span><span class="txt">Frog jump with K distances</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-243"><span class="box" aria-hidden="true"></span><span class="txt">House robber I / II (circular)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-244"><span class="box" aria-hidden="true"></span><span class="txt">Decode ways</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-245"><span class="box" aria-hidden="true"></span><span class="txt">Word break</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-246"><span class="box" aria-hidden="true"></span><span class="txt">Maximum sum with no-two-adjacent constraint</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">8.3 Grid / 2D DP</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-247"><span class="box" aria-hidden="true"></span><span class="txt">Unique paths, with obstacles</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-248"><span class="box" aria-hidden="true"></span><span class="txt">Minimum path sum, triangle</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-249"><span class="box" aria-hidden="true"></span><span class="txt">Cherry pickup / two-agent grid DP (3D state)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-250"><span class="box" aria-hidden="true"></span><span class="txt">Falling path sum</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-251"><span class="box" aria-hidden="true"></span><span class="txt">Maximal square</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">8.4 Knapsack family</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-252"><span class="box" aria-hidden="true"></span><span class="txt">Subset sum feasibility</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-253"><span class="box" aria-hidden="true"></span><span class="txt"><strong>0/1 knapsack</strong></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-254"><span class="box" aria-hidden="true"></span><span class="txt">Count subsets with given sum</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-255"><span class="box" aria-hidden="true"></span><span class="txt">Partition equal subset sum</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-256"><span class="box" aria-hidden="true"></span><span class="txt">Minimum subset sum difference</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-257"><span class="box" aria-hidden="true"></span><span class="txt">Target sum (assign +/−)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-258"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Unbounded knapsack</strong></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-259"><span class="box" aria-hidden="true"></span><span class="txt">Rod cutting</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-260"><span class="box" aria-hidden="true"></span><span class="txt">Coin change — minimum coins</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-261"><span class="box" aria-hidden="true"></span><span class="txt">Coin change — count ways (and why the loop order matters)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-262"><span class="box" aria-hidden="true"></span><span class="txt">Bounded knapsack with binary splitting</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">8.5 Subsequence DP</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-263"><span class="box" aria-hidden="true"></span><span class="txt"><strong>LIS</strong> O(n²)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-264"><span class="box" aria-hidden="true"></span><span class="txt">LIS O(n log n) with patience/binary search</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-265"><span class="box" aria-hidden="true"></span><span class="txt">Printing the LIS</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-266"><span class="box" aria-hidden="true"></span><span class="txt">Longest divisible subset</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-267"><span class="box" aria-hidden="true"></span><span class="txt">Longest bitonic subsequence</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-268"><span class="box" aria-hidden="true"></span><span class="txt">Number of LIS</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-269"><span class="box" aria-hidden="true"></span><span class="txt">Longest string chain</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-270"><span class="box" aria-hidden="true"></span><span class="txt">Maximum sum increasing subsequence</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-271"><span class="box" aria-hidden="true"></span><span class="txt">Russian doll envelopes (2D LIS)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">8.6 String DP</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-272"><span class="box" aria-hidden="true"></span><span class="txt"><strong>LCS</strong> + printing it</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-273"><span class="box" aria-hidden="true"></span><span class="txt">Longest common substring</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-274"><span class="box" aria-hidden="true"></span><span class="txt">Longest palindromic subsequence</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-275"><span class="box" aria-hidden="true"></span><span class="txt">Minimum insertions/deletions to make palindrome</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-276"><span class="box" aria-hidden="true"></span><span class="txt">Shortest common supersequence</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-277"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Edit distance</strong></span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-278"><span class="box" aria-hidden="true"></span><span class="txt">Distinct subsequences count</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-279"><span class="box" aria-hidden="true"></span><span class="txt">Wildcard pattern matching</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-280"><span class="box" aria-hidden="true"></span><span class="txt">Regular expression matching</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-281"><span class="box" aria-hidden="true"></span><span class="txt">Interleaving strings</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">8.7 Stock / state-machine DP</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-282"><span class="box" aria-hidden="true"></span><span class="txt">Best time to buy &amp; sell — 1 transaction</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-283"><span class="box" aria-hidden="true"></span><span class="txt">Unlimited transactions</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-284"><span class="box" aria-hidden="true"></span><span class="txt">At most 2 transactions</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-285"><span class="box" aria-hidden="true"></span><span class="txt">At most K transactions</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-286"><span class="box" aria-hidden="true"></span><span class="txt">With cooldown</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-287"><span class="box" aria-hidden="true"></span><span class="txt">With transaction fee</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-288"><span class="box" aria-hidden="true"></span><span class="txt">Generalize all six into one state-machine formulation</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">8.8 Partition / MCM DP</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-289"><span class="box" aria-hidden="true"></span><span class="txt">The partition-DP template (loop the split point)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-290"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Matrix chain multiplication</strong></span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-291"><span class="box" aria-hidden="true"></span><span class="txt">Minimum cost to cut a stick</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-292"><span class="box" aria-hidden="true"></span><span class="txt">Burst balloons</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-293"><span class="box" aria-hidden="true"></span><span class="txt">Palindrome partitioning II (min cuts)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-294"><span class="box" aria-hidden="true"></span><span class="txt">Boolean parenthesization</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-295"><span class="box" aria-hidden="true"></span><span class="txt">Egg drop</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t8-296"><span class="box" aria-hidden="true"></span><span class="txt">Partition array for maximum sum</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">8.9 Advanced DP</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-297"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Bitmask DP</strong> — subsets as integers</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-298"><span class="box" aria-hidden="true"></span><span class="txt">Travelling salesman (bitmask)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-299"><span class="box" aria-hidden="true"></span><span class="txt">Assignment problem / min cost matching via bitmask</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-300"><span class="box" aria-hidden="true"></span><span class="txt">Counting Hamiltonian paths</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-301"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Digit DP</strong> — count numbers with a property in [L, R]</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-302"><span class="box" aria-hidden="true"></span><span class="txt">Tree DP (subtree states, in-tree knapsack)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-303"><span class="box" aria-hidden="true"></span><span class="txt">Interval DP beyond MCM</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-304"><span class="box" aria-hidden="true"></span><span class="txt">Probability DP and expected value DP</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t8-305"><span class="box" aria-hidden="true"></span><span class="txt">DP on graphs / DAG memoization</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t8-306"><span class="box" aria-hidden="true"></span><span class="txt">SOS DP (sum over subsets)</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t8-307"><span class="box" aria-hidden="true"></span><span class="txt">Divide &amp; conquer DP optimization</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t8-308"><span class="box" aria-hidden="true"></span><span class="txt">Convex hull trick / Li Chao tree</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t8-309"><span class="box" aria-hidden="true"></span><span class="txt">Knuth optimization</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t8-310"><span class="box" aria-hidden="true"></span><span class="txt">Matrix exponentiation for linear recurrences</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section></section><section class="tier" id="tier-9" data-tier="9"><header class="tier-head"><span class="tier-num">9</span><h2>Greedy</h2><span class="tier-prog"><b>0</b> / 15</span></header><section class="group"><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t9-311"><span class="box" aria-hidden="true"></span><span class="txt">What makes greedy correct: exchange argument and the matroid intuition</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t9-312"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Proving</strong> a greedy — and recognizing when it fails (and DP is needed)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-313"><span class="box" aria-hidden="true"></span><span class="txt">Activity selection / N meetings in one room</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-314"><span class="box" aria-hidden="true"></span><span class="txt">Fractional knapsack</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-315"><span class="box" aria-hidden="true"></span><span class="txt">Job sequencing with deadlines</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-316"><span class="box" aria-hidden="true"></span><span class="txt">Minimum platforms</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-317"><span class="box" aria-hidden="true"></span><span class="txt">Huffman coding</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-318"><span class="box" aria-hidden="true"></span><span class="txt">Gas station circuit</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-319"><span class="box" aria-hidden="true"></span><span class="txt">Jump game I / II</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-320"><span class="box" aria-hidden="true"></span><span class="txt">Candy distribution</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-321"><span class="box" aria-hidden="true"></span><span class="txt">Assign cookies / two-pointer greedy</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-322"><span class="box" aria-hidden="true"></span><span class="txt">Minimum coins (Indian denominations — and why it&#x27;s greedy here but DP in general)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-323"><span class="box" aria-hidden="true"></span><span class="txt">Greedy + heap (scheduling, IPO, reorganize string)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-324"><span class="box" aria-hidden="true"></span><span class="txt">Sorting-by-custom-comparator greedy (largest number, boats to save people)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t9-325"><span class="box" aria-hidden="true"></span><span class="txt">Interval covering / merge-and-count</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section></section><section class="tier" id="tier-10" data-tier="10"><header class="tier-head"><span class="tier-num">10</span><h2>Bit Manipulation</h2><span class="tier-prog"><b>0</b> / 15</span></header><section class="group"><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-326"><span class="box" aria-hidden="true"></span><span class="txt">AND, OR, XOR, NOT, left/right shift semantics</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-327"><span class="box" aria-hidden="true"></span><span class="txt">Signed vs unsigned shift, arithmetic shift</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-328"><span class="box" aria-hidden="true"></span><span class="txt">Get / set / clear / toggle the i-th bit</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-329"><span class="box" aria-hidden="true"></span><span class="txt">Check if power of two: <code>n &amp; (n-1)</code></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-330"><span class="box" aria-hidden="true"></span><span class="txt">Count set bits — naive, Brian Kernighan, <code>__builtin_popcount</code></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-331"><span class="box" aria-hidden="true"></span><span class="txt">Lowest set bit: <code>x &amp; -x</code></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t10-332"><span class="box" aria-hidden="true"></span><span class="txt"><code>__builtin_clz</code> / <code>ctz</code> and computing floor(log2)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-333"><span class="box" aria-hidden="true"></span><span class="txt">XOR properties: self-inverse, associativity, prefix XOR</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t10-334"><span class="box" aria-hidden="true"></span><span class="txt">Single number I / II / III</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t10-335"><span class="box" aria-hidden="true"></span><span class="txt">Missing number via XOR</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t10-336"><span class="box" aria-hidden="true"></span><span class="txt">Enumerate all subsets of a set</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t10-337"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Enumerate all submasks of a mask</strong> in O(3^n) total</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t10-338"><span class="box" aria-hidden="true"></span><span class="txt">Bitset for fast set operations</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t10-339"><span class="box" aria-hidden="true"></span><span class="txt">Swap without temp, min/max without branching</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t10-340"><span class="box" aria-hidden="true"></span><span class="txt">Gray code</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section></section><section class="tier" id="tier-11" data-tier="11"><header class="tier-head"><span class="tier-num">11</span><h2>Math &amp; Number Theory</h2><span class="tier-prog"><b>0</b> / 30</span></header><section class="group"><h3 class="grp">11.1 Core</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-341"><span class="box" aria-hidden="true"></span><span class="txt">GCD / LCM, Euclidean algorithm</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-342"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Extended Euclid</strong> — solving ax + by = gcd</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-343"><span class="box" aria-hidden="true"></span><span class="txt">Modular arithmetic rules; the negative-mod pitfall</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-344"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Fast exponentiation</strong> (binary exponentiation)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-345"><span class="box" aria-hidden="true"></span><span class="txt">Modular multiplicative inverse via Fermat&#x27;s little theorem</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-346"><span class="box" aria-hidden="true"></span><span class="txt">Modular inverse via extended Euclid (non-prime mod)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-347"><span class="box" aria-hidden="true"></span><span class="txt">Overflow-safe modular multiplication</span><span class="tag tag-C" title="competitive">C</span></label></li></ul></section><section class="group"><h3 class="grp">11.2 Primes &amp; factorization</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-348"><span class="box" aria-hidden="true"></span><span class="txt">Primality test in O(√n)</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-349"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Sieve of Eratosthenes</strong></span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-350"><span class="box" aria-hidden="true"></span><span class="txt">Linear sieve / smallest prime factor sieve</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-351"><span class="box" aria-hidden="true"></span><span class="txt">Factorization in O(log n) using SPF</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-352"><span class="box" aria-hidden="true"></span><span class="txt">Divisor count and divisor sum from prime factorization</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-353"><span class="box" aria-hidden="true"></span><span class="txt">Segmented sieve</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-354"><span class="box" aria-hidden="true"></span><span class="txt">Miller-Rabin, Pollard&#x27;s rho</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section><section class="group"><h3 class="grp">11.3 Combinatorics</h3><ul class="items"><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-355"><span class="box" aria-hidden="true"></span><span class="txt">Permutations, combinations, the fundamental counting principle</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-356"><span class="box" aria-hidden="true"></span><span class="txt">Pascal&#x27;s triangle, nCr by DP</span><span class="tag tag-B" title="both">B</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-357"><span class="box" aria-hidden="true"></span><span class="txt">nCr mod p with precomputed factorials + inverse factorials</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-358"><span class="box" aria-hidden="true"></span><span class="txt">Lucas&#x27; theorem</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-359"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Inclusion-exclusion principle</strong></span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-360"><span class="box" aria-hidden="true"></span><span class="txt">Stars and bars</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-361"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Catalan numbers</strong> — and the 6 problems they secretly solve</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-362"><span class="box" aria-hidden="true"></span><span class="txt">Derangements</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="B"><label><input type="checkbox" data-id="t11-363"><span class="box" aria-hidden="true"></span><span class="txt">Pigeonhole principle as a proof tool</span><span class="tag tag-B" title="both">B</span></label></li></ul></section><section class="group"><h3 class="grp">11.4 Further</h3><ul class="items"><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-364"><span class="box" aria-hidden="true"></span><span class="txt">Euler&#x27;s totient function</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-365"><span class="box" aria-hidden="true"></span><span class="txt">Chinese remainder theorem</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-366"><span class="box" aria-hidden="true"></span><span class="txt">Matrix exponentiation</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-367"><span class="box" aria-hidden="true"></span><span class="txt">FFT / NTT for polynomial multiplication</span><span class="tag tag-O" title="optional">O</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-368"><span class="box" aria-hidden="true"></span><span class="txt">Basic probability &amp; expected value</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t11-369"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Game theory</strong>: Nim, XOR of pile sizes</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t11-370"><span class="box" aria-hidden="true"></span><span class="txt">Sprague-Grundy numbers</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section></section><section class="tier" id="tier-12" data-tier="12"><header class="tier-head"><span class="tier-num">12</span><h2>Specialized</h2><span class="tier-prog"><b>0</b> / 24</span></header><section class="group"><h3 class="grp">12.1 Geometry</h3><ul class="items"><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-371"><span class="box" aria-hidden="true"></span><span class="txt">Point/vector representation, dot and cross product</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-372"><span class="box" aria-hidden="true"></span><span class="txt">Orientation test (CW / CCW / collinear)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-373"><span class="box" aria-hidden="true"></span><span class="txt">Line segment intersection</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-374"><span class="box" aria-hidden="true"></span><span class="txt">Point in polygon</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-375"><span class="box" aria-hidden="true"></span><span class="txt">Polygon area (shoelace)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-376"><span class="box" aria-hidden="true"></span><span class="txt"><strong>Convex hull</strong> (Andrew&#x27;s monotone chain)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-377"><span class="box" aria-hidden="true"></span><span class="txt">Closest pair of points (divide &amp; conquer)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t12-378"><span class="box" aria-hidden="true"></span><span class="txt">Line sweep for geometry</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section><section class="group"><h3 class="grp">12.2 Randomized &amp; sampling</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-379"><span class="box" aria-hidden="true"></span><span class="txt">Reservoir sampling</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-380"><span class="box" aria-hidden="true"></span><span class="txt">Fisher-Yates shuffle</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-381"><span class="box" aria-hidden="true"></span><span class="txt">Randomized quickselect</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-382"><span class="box" aria-hidden="true"></span><span class="txt">Random pick with weight (prefix sum + binary search)</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">12.3 Design questions</h3><ul class="items"><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-383"><span class="box" aria-hidden="true"></span><span class="txt">LRU cache (hashmap + doubly linked list)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-384"><span class="box" aria-hidden="true"></span><span class="txt">LFU cache</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-385"><span class="box" aria-hidden="true"></span><span class="txt">Insert/Delete/GetRandom in O(1)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-386"><span class="box" aria-hidden="true"></span><span class="txt">Design Twitter / news feed</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-387"><span class="box" aria-hidden="true"></span><span class="txt">Design a rate limiter (token bucket)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-388"><span class="box" aria-hidden="true"></span><span class="txt">Design an in-memory file system / autocomplete (trie-backed)</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-389"><span class="box" aria-hidden="true"></span><span class="txt">Snapshot array, time-based key-value store</span><span class="tag tag-I" title="interview">I</span></label></li><li class="item" data-tag="I"><label><input type="checkbox" data-id="t12-390"><span class="box" aria-hidden="true"></span><span class="txt">Median from a data stream</span><span class="tag tag-I" title="interview">I</span></label></li></ul></section><section class="group"><h3 class="grp">12.4 Miscellaneous techniques</h3><ul class="items"><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-391"><span class="box" aria-hidden="true"></span><span class="txt">Ordered set via PBDS (<code>order_of_key</code>, <code>find_by_order</code>)</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-392"><span class="box" aria-hidden="true"></span><span class="txt">Coordinate compression</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="C"><label><input type="checkbox" data-id="t12-393"><span class="box" aria-hidden="true"></span><span class="txt">Offline query processing</span><span class="tag tag-C" title="competitive">C</span></label></li><li class="item" data-tag="O"><label><input type="checkbox" data-id="t12-394"><span class="box" aria-hidden="true"></span><span class="txt">Bloom filter, consistent hashing (conceptual)</span><span class="tag tag-O" title="optional">O</span></label></li></ul></section></section>
+    </main>
+  </div>
+
+  <div class="tail"><h2 class="tail-h">Suggested Order</h2><p>Do <strong>not</strong> go tier-by-tier top to bottom. This ordering respects dependencies and front-loads interview yield:</p><table><thead><tr><th>Phase</th><th>Content</th><th>Weeks</th></tr></thead><tbody><tr><td>1</td><td>Tier 0 → 1 (arrays, binary search, sorting)</td><td>3</td></tr><tr><td>2</td><td>Tier 2 (hashing, string basics) + Tier 3 (LL, stack, queue)</td><td>3</td></tr><tr><td>3</td><td>Tier 5 (recursion/backtracking)</td><td>2</td></tr><tr><td>4</td><td>Tier 6.1–6.2 (trees, BST) + Tier 4 (heaps)</td><td>3</td></tr><tr><td>5</td><td>Tier 8.1–8.6 (DP core)</td><td>5</td></tr><tr><td>6</td><td>Tier 7.1–7.5 (graphs core)</td><td>4</td></tr><tr><td>7</td><td>Tier 9 (greedy) + Tier 10 (bits) + Tier 11.1–11.3 (math)</td><td>3</td></tr><tr><td>8</td><td>Tier 8.7–8.9 (advanced DP) + Tier 6.4 (segtree/BIT)</td><td>4</td></tr><tr><td>9</td><td>Tier 6.3, 7.6, 2.3 (LCA, SCC, KMP/Z)</td><td>3</td></tr><tr><td>10</td><td>Tier 12.3 (design) + revision + mock interviews</td><td>3</td></tr></tbody></table><p><strong>~33 weeks at a sane pace.</strong> You have roughly 16 months to December 2026, so this is comfortably achievable with room for two full revision passes.</p><h2 class="tail-h">Rules That Actually Determine Whether This Works</h2><ol class="rules"><li><strong>Implement from scratch before solving problems with it.</strong> Reading a segment tree implementation and writing one are different skills, and only the second transfers.</li><li><strong>Spaced repetition, not linear progress.</strong> Every problem you failed goes on a re-solve list. Re-solve at +7 days and +30 days. If you can&#x27;t re-solve it cold at 30 days, you never learned it — you recognized it.</li><li><strong>20–40 minutes stuck, then read the editorial.</strong> Longer is romanticism. But after reading, close the tab and implement from memory. Never copy.</li><li><strong>Log every failure by cause,</strong> not by problem. Four buckets: <em>didn&#x27;t know the technique</em> / <em>knew it but didn&#x27;t recognize it</em> / <em>recognized it but implementation bugs</em> / <em>complexity misjudged</em>. After 100 problems the distribution tells you exactly what to fix. Most people assume bucket 1 and are actually in bucket 2.</li><li><strong>Pattern recognition is the actual skill.</strong> The bottleneck in an interview is never &quot;I&#x27;ve never seen a monotonic stack.&quot; It&#x27;s &quot;I didn&#x27;t notice this was a monotonic stack problem.&quot; That only comes from volume — roughly 400–600 problems for interview readiness, in the range of 1500+ for CF Expert.</li><li><strong>Contest regularly from now, not later.</strong> Codeforces Div. 3/Div. 2 weekly. Contest pressure is a different skill from untimed practice and it doesn&#x27;t transfer automatically.</li><li><strong>Say the complexity out loud before you code.</strong> Interviewers weight this heavily, and it forces you to catch the wrong approach before you&#x27;ve spent 20 minutes on it.</li></ol></div>
+
+  <div class="foot">
+    <span>Progress saves automatically.</span>
+    <span id="footStat">0 of 395 complete</span>
+  </div>
+</div>
+
+<script>
+const KEY = 'dsa-breakdown-v1';
+const boxes = [...document.querySelectorAll('.items input')];
+const rungs = [...document.querySelectorAll('.rung')];
+let done = new Set();
+let saveTimer = null;
+
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await window.storage.set(KEY, JSON.stringify([...done])); }
+    catch (e) { console.error('save failed', e); }
+  }, 250);
+}
+
+async function load() {
+  try {
+    const r = await window.storage.get(KEY);
+    if (r && r.value) done = new Set(JSON.parse(r.value));
+  } catch (e) { /* no saved state yet */ }
+  boxes.forEach(b => b.checked = done.has(b.dataset.id));
+  render();
+}
+
+function render() {
+  const n = done.size, total = boxes.length;
+  document.getElementById('meterDone').textContent = n;
+  document.getElementById('meterPct').textContent = Math.round(n / total * 100) + '%';
+  document.getElementById('meterFill').style.width = (n / total * 100) + '%';
+  document.getElementById('footStat').textContent = n + ' of ' + total + ' complete';
+
+  document.querySelectorAll('.tier').forEach(sec => {
+    const bs = [...sec.querySelectorAll('.items input')];
+    const c = bs.filter(b => b.checked).length;
+    sec.querySelector('.tier-prog b').textContent = c;
+    const rung = rungs.find(r => r.dataset.tier === sec.dataset.tier);
+    rung.querySelector('.rung-bar i').style.width = (c / bs.length * 100) + '%';
+    rung.querySelector('.rung-count b').textContent = c;
+    rung.classList.toggle('done', c === bs.length);
+  });
+}
+
+document.querySelector('.main').addEventListener('change', e => {
+  if (e.target.type !== 'checkbox') return;
+  e.target.checked ? done.add(e.target.dataset.id) : done.delete(e.target.dataset.id);
+  render();
+  save();
+});
+
+// tag filters — multi-select; none selected means show everything
+const active = new Set();
+document.querySelectorAll('.filter').forEach(btn => {
+  btn.setAttribute('aria-pressed', 'false');
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.filter;
+    active.has(t) ? active.delete(t) : active.add(t);
+    btn.setAttribute('aria-pressed', active.has(t));
+    document.querySelectorAll('.item').forEach(li => {
+      li.classList.toggle('hide', active.size > 0 && !active.has(li.dataset.tag));
+    });
+    document.querySelectorAll('.group').forEach(g => {
+      const any = [...g.querySelectorAll('.item')].some(li => !li.classList.contains('hide'));
+      g.style.display = any ? '' : 'none';
+    });
+    document.querySelectorAll('.tier').forEach(s => {
+      const any = [...s.querySelectorAll('.item')].some(li => !li.classList.contains('hide'));
+      s.style.display = any ? '' : 'none';
+    });
+  });
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Clear all ' + done.size + ' ticked items?')) return;
+  done.clear();
+  boxes.forEach(b => b.checked = false);
+  render();
+  save();
+});
+
+// measure the sticky chrome instead of hardcoding it — the header wraps on
+// narrow screens, and the mobile rail is a second sticky layer beneath it
+const bar = document.querySelector('.bar');
+const railEl = document.querySelector('.rail');
+const root = document.documentElement;
+let obs = null;
+
+function syncLineSidebar() {
+  const activeRung = document.querySelector('.rung.on');
+  const activeLine = document.getElementById('lineActive');
+  const wrapper = document.querySelector('.rungs-wrapper');
+  if (!activeRung || !activeLine || !wrapper) return;
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const rungRect = activeRung.getBoundingClientRect();
+  const top = rungRect.top - wrapperRect.top;
+  const height = rungRect.height;
+  activeLine.style.transform = `translateY(${top}px)`;
+  activeLine.style.height = `${height}px`;
+  activeLine.style.opacity = '1';
+}
+
+const hoverLine = document.getElementById('lineHover');
+document.querySelectorAll('.rung').forEach(rung => {
+  rung.addEventListener('mouseenter', () => {
+    const wrapper = document.querySelector('.rungs-wrapper');
+    if (!hoverLine || !wrapper) return;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const rungRect = rung.getBoundingClientRect();
+    hoverLine.style.transform = `translateY(${rungRect.top - wrapperRect.top}px)`;
+    hoverLine.style.height = `${rungRect.height}px`;
+    hoverLine.style.opacity = '0.4';
+  });
+});
+if (document.querySelector('.rungs-wrapper')) {
+  document.querySelector('.rungs-wrapper').addEventListener('mouseleave', () => {
+    if (hoverLine) hoverLine.style.opacity = '0';
+  });
+}
+
+function measure() {
+  const barH = bar.offsetHeight;
+  const mobile = window.matchMedia('(max-width:1040px)').matches;
+  root.style.setProperty('--barH', barH + 'px');
+  root.style.setProperty('--railH', (mobile ? railEl.offsetHeight : 0) + 'px');
+
+  const top = barH + (mobile ? railEl.offsetHeight : 0) + 4;
+  if (obs) obs.disconnect();
+  obs = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      rungs.forEach(r => r.classList.toggle('on', r.dataset.tier === en.target.dataset.tier));
+      syncLineSidebar();
+    });
+  }, { rootMargin: `-${top}px 0px -70% 0px` });
+  document.querySelectorAll('.tier').forEach(s => obs.observe(s));
+  syncLineSidebar();
+}
+
+measure();
+addEventListener('resize', measure);
+addEventListener('scroll', syncLineSidebar, { passive: true });
+addEventListener('load', measure);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+function formatDetailJson(data) {
+  let html = `<div class="topic-detail-card">`;
+  
+  if (data.title) {
+    html += `<h4 class="detail-title">${data.title}</h4>`;
+  }
+  
+  if (data.overview) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Overview</h5><p class="detail-p">${data.overview}</p></div>`;
+  }
+  
+  if (data.definition) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Definitions</h5><ul class="detail-list">`;
+    if (typeof data.definition === 'object') {
+      for (const [k, v] of Object.entries(data.definition)) {
+        html += `<li><strong>${k}:</strong> ${v}</li>`;
+      }
+    } else {
+      html += `<li>${data.definition}</li>`;
+    }
+    html += `</ul></div>`;
+  }
+
+  if (data.intuition) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Intuition</h5><ul class="detail-list">`;
+    const arr = Array.isArray(data.intuition) ? data.intuition : [data.intuition];
+    arr.forEach(item => html += `<li>${item}</li>`);
+    html += `</ul></div>`;
+  }
+
+  if (data.whyItMatters) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Why It Matters</h5><ul class="detail-list">`;
+    const arr = Array.isArray(data.whyItMatters) ? data.whyItMatters : [data.whyItMatters];
+    arr.forEach(item => html += `<li>${item}</li>`);
+    html += `</ul></div>`;
+  }
+
+  if (data.mathematicalExplanation) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Mathematical Explanation</h5><ul class="detail-list">`;
+    if (typeof data.mathematicalExplanation === 'object') {
+      for (const [k, v] of Object.entries(data.mathematicalExplanation)) {
+        html += `<li><strong>${k}:</strong> ${v}</li>`;
+      }
+    } else {
+      html += `<li>${data.mathematicalExplanation}</li>`;
+    }
+    html += `</ul></div>`;
+  }
+
+  if (data.stepByStep) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Step By Step</h5><ol class="detail-list">`;
+    const arr = Array.isArray(data.stepByStep) ? data.stepByStep : [data.stepByStep];
+    arr.forEach(item => html += `<li>${item}</li>`);
+    html += `</ol></div>`;
+  }
+
+  if (data.sections && Array.isArray(data.sections)) {
+    data.sections.forEach(sec => {
+      html += `<div class="detail-sec">`;
+      if (sec.heading) html += `<h5 class="detail-h">${sec.heading}</h5>`;
+      if (sec.content) {
+        if (Array.isArray(sec.content)) {
+          html += `<ul class="detail-list">${sec.content.map(c => `<li>${c}</li>`).join('')}</ul>`;
+        } else {
+          html += `<p class="detail-p">${sec.content}</p>`;
+        }
+      }
+      if (sec.examples && Array.isArray(sec.examples)) {
+        sec.examples.forEach(ex => {
+          html += `<div class="detail-code-block">`;
+          if (ex.recurrence) html += `<code>${ex.recurrence}</code>`;
+          if (ex.code) html += `<pre><code>${ex.code}</code></pre>`;
+          if (ex.analysis && Array.isArray(ex.analysis)) {
+            html += `<ul class="detail-list">${ex.analysis.map(a => `<li>${a}</li>`).join('')}</ul>`;
+          }
+          if (ex.reason) html += `<p class="detail-p"><em>Reason: ${ex.reason}</em></p>`;
+          html += `</div>`;
+        });
+      }
+      html += `</div>`;
+    });
+  }
+
+  if (data.examples && Array.isArray(data.examples)) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Examples</h5>`;
+    data.examples.forEach(ex => {
+      html += `<div class="detail-code-block">`;
+      if (ex.code) html += `<pre><code>${ex.code}</code></pre>`;
+      if (ex.time) html += `<div style="margin-top:4px;"><strong>Complexity:</strong> ${ex.time}</div>`;
+      if (ex.reason) html += `<p class="detail-p">${ex.reason}</p>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (data.cppImplementation) {
+    html += `<div class="detail-sec"><h5 class="detail-h">C++ Implementation</h5>`;
+    if (typeof data.cppImplementation === 'object') {
+      if (data.cppImplementation.code) html += `<pre class="cpp-code"><code>${data.cppImplementation.code}</code></pre>`;
+      if (data.cppImplementation.explanation) html += `<p class="detail-p">${data.cppImplementation.explanation}</p>`;
+    } else {
+      html += `<pre class="cpp-code"><code>${data.cppImplementation}</code></pre>`;
+    }
+    html += `</div>`;
+  }
+
+  if (data.interviewQuestions && Array.isArray(data.interviewQuestions)) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Interview Q&A</h5><div class="interview-qa">`;
+    data.interviewQuestions.forEach(qa => {
+      html += `<div class="qa-item"><p class="qa-q"><strong>Q: ${qa.question}</strong></p><p class="qa-a">A: ${qa.answer}</p></div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  if (data.commonMistakes && Array.isArray(data.commonMistakes)) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Common Mistakes</h5><ul class="detail-list warning-list">${data.commonMistakes.map(m => `<li>${m}</li>`).join('')}</ul></div>`;
+  }
+
+  if (data.practiceProblems) {
+    html += `<div class="detail-sec"><h5 class="detail-h">Practice Problems</h5><div class="practice-probs">`;
+    if (typeof data.practiceProblems === 'object') {
+      for (const [lvl, probs] of Object.entries(data.practiceProblems)) {
+        if (Array.isArray(probs) && probs.length > 0) {
+          html += `<p><strong>${lvl.toUpperCase()}:</strong> ${probs.join(', ')}</p>`;
+        }
+      }
+    }
+    html += `</div></div>`;
+  }
+
+  if (data.revisionNotes || data.keyTakeaways) {
+    const notes = data.revisionNotes || data.keyTakeaways;
+    if (Array.isArray(notes)) {
+      html += `<div class="detail-sec"><h5 class="detail-h">Key Takeaways</h5><ul class="detail-list">${notes.map(n => `<li>${n}</li>`).join('')}</ul></div>`;
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function initTopicDropdowns() {
+  document.querySelectorAll('.item').forEach((item, index) => {
+    const topicNum = index + 1;
+    item.dataset.topicNum = topicNum;
+
+    const label = item.querySelector('label');
+    if (!label) return;
+
+    if (!label.querySelector('.drop-btn')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'drop-btn';
+      btn.title = `View Topic ${topicNum} Details`;
+      btn.innerHTML = `<svg class="drop-icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+      label.appendChild(btn);
+
+      const panel = document.createElement('div');
+      panel.className = 'item-detail-panel';
+      panel.style.display = 'none';
+      item.appendChild(panel);
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = panel.style.display !== 'none';
+
+        if (!isOpen) {
+          btn.classList.add('open');
+          panel.style.display = 'block';
+          if (!panel.dataset.loaded) {
+            panel.innerHTML = `<div class="detail-loading">Loading topic breakdown ${topicNum}...</div>`;
+            fetch(`./${topicNum}.json`)
+              .then(res => {
+                if (!res.ok) throw new Error('JSON missing');
+                return res.json();
+              })
+              .then(data => {
+                panel.dataset.loaded = 'true';
+                panel.innerHTML = formatDetailJson(data);
+                syncLineSidebar();
+              })
+              .catch(err => {
+                panel.dataset.loaded = 'true';
+                const topicTitle = item.querySelector('.txt') ? item.querySelector('.txt').textContent : `Topic ${topicNum}`;
+                const tag = item.dataset.tag || 'B';
+                const fallbackData = generateTopicFallback(topicNum, topicTitle, tag);
+                panel.innerHTML = formatDetailJson(fallbackData);
+                syncLineSidebar();
+              });
+          }
+        } else {
+          btn.classList.remove('open');
+          panel.style.display = 'none';
+          syncLineSidebar();
+        }
+      });
+    }
+  });
+}
+
+function generateTopicFallback(topicNum, topicTitle, tag) {
+  const cleanTitle = topicTitle.trim();
+  const lower = cleanTitle.toLowerCase();
+  
+  let overview = `Comprehensive study guide for Atom #${topicNum}: ${cleanTitle}.`;
+  let definition = `Mastering this concept is essential for technical interviews and competitive programming.`;
+  let intuition = [`Focus on understanding the underlying state and invariant.`, `Practice implementing this from a blank file without reference.`];
+  let cppCode = `// C++ implementation pattern for ${cleanTitle}\nvoid solve() {\n    // Core logic\n}`;
+  let timeComp = "O(n)";
+  let spaceComp = "O(1)";
+
+  if (lower.includes("prefix") || lower.includes("difference")) {
+    overview = "Prefix techniques precompute cumulative data (sums, XOR, products) to allow O(1) range queries or O(1) range updates using difference arrays.";
+    definition = "Precompute P[i] = P[i-1] + A[i]. Range sum [L, R] = P[R] - P[L-1].";
+    intuition = ["Transform range queries from O(N) into O(1) time.", "Combine with HashMaps to count subarrays meeting target properties."];
+    cppCode = `// 1D Prefix Sum\nvector<long long> P(n + 1, 0);\nfor(int i = 0; i < n; i++) P[i+1] = P[i] + A[i];\n// Range sum [L, R] (0-indexed):\nlong long sum = P[R + 1] - P[L];`;
+    timeComp = "O(n) precomputation, O(1) query";
+    spaceComp = "O(n)";
+  } else if (lower.includes("two pointer") || lower.includes("2sum") || lower.includes("3sum") || lower.includes("partition")) {
+    overview = "Two-pointer techniques use two indices moving in converging or same directions to scan linearly through arrays or lists.";
+    definition = "Maintain left and right pointers based on monotonicity (e.g. sorted array properties).";
+    intuition = ["Avoid nested loops by skipping impossible search space.", "Remember to handle duplicate elements in 3Sum/4Sum discipline."];
+    cppCode = `int L = 0, R = n - 1;\nwhile(L < R) {\n    int sum = A[L] + A[R];\n    if(sum == target) return {L, R};\n    else if(sum < target) L++;\n    else R--;\n}`;
+    timeComp = "O(n)";
+    spaceComp = "O(1)";
+  } else if (lower.includes("window") || lower.includes("sliding")) {
+    overview = "Sliding window maintains a dynamic or fixed subarray range while sliding across the sequence to evaluate optimal constraints.";
+    definition = "Expand right pointer to include elements; shrink left pointer while constraints are violated.";
+    intuition = ["Track window metrics (frequency map, sum, max) without recomputing from scratch.", "Use shrink-while-invalid template for variable windows."];
+    cppCode = `int L = 0, maxLen = 0;\nunordered_map<char, int> freq;\nfor(int R = 0; R < n; R++) {\n    freq[s[R]]++;\n    while(freq[s[R]] > 1) {\n        freq[s[L]]--;\n        L++;\n    }\n    maxLen = max(maxLen, R - L + 1);\n}`;
+    timeComp = "O(n)";
+    spaceComp = "O(K) where K is unique character set";
+  } else if (lower.includes("binary search") || lower.includes("bound")) {
+    overview = "Binary search divides monotonic search space in half each iteration to achieve logarithmic search time.";
+    definition = "Maintain low and high bounds such that target or optimal predicate is monotonically split.";
+    intuition = ["Identify the monotone predicate: F F F T T T.", "Binary search on the answer for minimize-the-maximum problems."];
+    cppCode = `int lo = 1, hi = 1e9, ans = hi;\nwhile(lo <= hi) {\n    int mid = lo + (hi - lo) / 2;\n    if(check(mid)) {\n        ans = mid;\n        hi = mid - 1;\n    } else {\n        lo = mid + 1;\n    }\n}`;
+    timeComp = "O(log N)";
+    spaceComp = "O(1)";
+  } else if (lower.includes("stack") || lower.includes("monotonic")) {
+    overview = "Monotonic stack maintains elements in strictly increasing or decreasing order to answer nearest greater/smaller queries in O(n).";
+    definition = "Push elements while maintaining order invariant by popping smaller/greater elements.";
+    intuition = ["Use for Next Greater Element, Daily Temperatures, and Histogram Area.", "Each element enters and leaves the stack at most once."];
+    cppCode = `stack<int> st;\nvector<int> nge(n, -1);\nfor(int i = 0; i < n; i++) {\n    while(!st.empty() && A[st.top()] < A[i]) {\n        nge[st.top()] = A[i];\n        st.pop();\n    }\n    st.push(i);\n}`;
+    timeComp = "O(n) amortized";
+    spaceComp = "O(n)";
+  } else if (lower.includes("tree") || lower.includes("bst") || lower.includes("traversal")) {
+    overview = "Tree structures represent hierarchical data. Binary trees and BSTs form the basis of logarithmic search and dynamic set storage.";
+    definition = "Root node with left and right subtrees. Inorder traversal of BST gives sorted keys.";
+    intuition = ["Use DFS (preorder, inorder, postorder) for structural propagation.", "Use BFS with queue for level-order and shortest path on unweighted trees."];
+    cppCode = `void inorder(TreeNode* root) {\n    if(!root) return;\n    inorder(root->left);\n    cout << root->val << " ";\n    inorder(root->right);\n}`;
+    timeComp = "O(N)";
+    spaceComp = "O(H) recursion stack height";
+  } else if (lower.includes("graph") || lower.includes("bfs") || lower.includes("dfs")) {
+    overview = "Graphs model pairwise relationships between vertices via directed or undirected edges.";
+    definition = "G = (V, E). Represented via Adjacency List `vector<vector<int>> adj`.";
+    intuition = ["BFS uses queue for shortest path in unweighted graphs.", "DFS uses stack/recursion for cycle detection, topological sort, and components."];
+    cppCode = `vector<bool> vis(V, false);\nqueue<int> q;\nq.push(src); vis[src] = true;\nwhile(!q.empty()) {\n    int u = q.front(); q.pop();\n    for(int v : adj[u]) {\n        if(!vis[v]) { vis[v] = true; q.push(v); }\n    }\n}`;
+    timeComp = "O(V + E)";
+    spaceComp = "O(V + E)";
+  } else if (lower.includes("dp") || lower.includes("dynamic programming") || lower.includes("subsequence") || lower.includes("knapsack")) {
+    overview = "Dynamic Programming solves complex optimization problems by breaking them down into overlapping subproblems with optimal substructure.";
+    definition = "Define DP state `dp[i]` = optimal answer for subproblem `i`. Write transition relation.";
+    intuition = ["Start with top-down recursion + memoization, then convert to bottom-up table.", "Optimize space when `dp[i]` only depends on `dp[i-1]`."];
+    cppCode = `vector<int> dp(n + 1, 0);\ndp[0] = 0; dp[1] = 1;\nfor(int i = 2; i <= n; i++) {\n    dp[i] = dp[i-1] + dp[i-2];\n}`;
+    timeComp = "O(N)";
+    spaceComp = "O(N) (or O(1) space optimized)";
+  } else if (lower.includes("map") || lower.includes("hash") || lower.includes("set")) {
+    overview = "Hash tables (`unordered_map`/`unordered_set`) offer O(1) average lookup, insertion, and deletion, while Red-Black trees (`map`/`set`) maintain sorted order in O(log n).";
+    definition = "Use `unordered_map` for fast lookups; use `map` when lower_bound/upper_bound or sorted iteration is required.";
+    intuition = ["Be cautious of hash collisions (anti-hash attack) in competitive programming.", "Custom hash required for `std::pair` keys in `unordered_map`."];
+    cppCode = `unordered_map<int, int> freq;\nfreq.reserve(1024);\nfor(int x : nums) freq[x]++;\nfor(auto& [key, count] : freq) {\n    cout << key << ": " << count << "\\n";\n}`;
+    timeComp = "O(1) average, O(N) worst case";
+    spaceComp = "O(N)";
+  }
+
+  return {
+    title: `Atom #${topicNum}: ${cleanTitle}`,
+    overview: overview,
+    definition: definition,
+    intuition: intuition,
+    whyItMatters: [
+      "Core building block in competitive coding and technical interviews.",
+      "Improves algorithmic intuition and edge-case handling."
+    ],
+    cppImplementation: {
+      code: cppCode,
+      explanation: `Standard C++ snippet for ${cleanTitle}. Time: ${timeComp}, Space: ${spaceComp}.`
+    },
+    interviewQuestions: [
+      {
+        question: `What is the key invariant of ${cleanTitle}?`,
+        answer: `Maintain valid state while ensuring time complexity bounds (${timeComp}).`
+      },
+      {
+        question: `What is the space complexity?`,
+        answer: `Requires ${spaceComp}.`
+      }
+    ],
+    commonMistakes: [
+      "Off-by-one index mistakes.",
+      "Integer overflow during intermediate additions/multiplications.",
+      "Not handling boundary conditions (empty input, single element)."
+    ],
+    practiceProblems: {
+      easy: ["Standard Practice Problem 1"],
+      medium: ["LeetCode Medium Variant"],
+      hard: ["Advanced Competitive Variant"]
+    }
+  };
+}
+</script>
+
+<!-- Centered Modal Drilldown System -->
+<div class="drill-overlay" id="drillOverlay">
+  <div class="drill-modal" id="drillModal" role="dialog" aria-label="Topic Study Drilldown">
+    <div class="drill-modal-header">
+      <span class="drill-crumb" id="drillCrumb">Foundations / Atom #1</span>
+      <button type="button" class="modal-close-x" id="modalCloseX" title="Close drilldown (ESC)">✕</button>
+    </div>
+    <div class="drill-title-bar">
+      <h3 class="drill-atom-title" id="drillTitle">Big-O, Big-Θ, Big-Ω</h3>
+      <div class="drill-atom-tags" id="drillTags"></div>
+    </div>
+    <div class="drill-tabs">
+      <button type="button" class="drill-tab active" data-tab="overview">📌 Overview &amp; Intuition</button>
+      <button type="button" class="drill-tab" data-tab="code">💻 C++ Implementation</button>
+      <button type="button" class="drill-tab" data-tab="interview">❓ Interview Q&amp;A</button>
+      <button type="button" class="drill-tab" data-tab="practice">🎯 Practice Problems</button>
+    </div>
+    <div class="drill-body" id="drillBody">
+      <!-- Dynamic drilldown tab content renders here -->
+    </div>
+  </div>
+</div>
+
+<script>
+let currentDrillData = null;
+let currentTab = 'overview';
+
+const drillOverlay = document.getElementById('drillOverlay');
+const modalCloseX = document.getElementById('modalCloseX');
+const drillCrumb = document.getElementById('drillCrumb');
+const drillTitle = document.getElementById('drillTitle');
+const drillTags = document.getElementById('drillTags');
+const drillBody = document.getElementById('drillBody');
+
+function closeDrilldown() {
+  drillOverlay.classList.remove('open');
+}
+
+modalCloseX.addEventListener('click', closeDrilldown);
+drillOverlay.addEventListener('click', (e) => {
+  if (e.target === drillOverlay) closeDrilldown();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrilldown(); });
+
+document.querySelectorAll('.drill-tab').forEach(tabBtn => {
+  tabBtn.addEventListener('click', () => {
+    document.querySelectorAll('.drill-tab').forEach(b => b.classList.remove('active'));
+    tabBtn.classList.add('active');
+    currentTab = tabBtn.dataset.tab;
+    renderDrillBody();
+  });
+});
+
+function renderDrillBody() {
+  if (!currentDrillData) return;
+  const d = currentDrillData;
+  let html = `<div class="drill-card">`;
+
+  if (currentTab === 'overview') {
+    html += `<div><h4 class="drill-sec-h">Overview</h4><p class="drill-p">${d.overview}</p></div>`;
+    if (d.definition) {
+      html += `<div><h4 class="drill-sec-h">Core Definition</h4>`;
+      if (typeof d.definition === 'object') {
+        html += `<ul class="drill-list">`;
+        for (const [k, v] of Object.entries(d.definition)) {
+          html += `<li><strong>${k}:</strong> ${v}</li>`;
+        }
+        html += `</ul>`;
+      } else {
+        html += `<p class="drill-p">${d.definition}</p>`;
+      }
+      html += `</div>`;
+    }
+    if (d.intuition) {
+      html += `<div><h4 class="drill-sec-h">Key Intuition</h4><ul class="drill-list">`;
+      const arr = Array.isArray(d.intuition) ? d.intuition : [d.intuition];
+      arr.forEach(i => html += `<li>${i}</li>`);
+      html += `</ul></div>`;
+    }
+    if (d.whyItMatters) {
+      html += `<div><h4 class="drill-sec-h">Why It Matters</h4><ul class="drill-list">`;
+      const arr = Array.isArray(d.whyItMatters) ? d.whyItMatters : [d.whyItMatters];
+      arr.forEach(w => html += `<li>${w}</li>`);
+      html += `</ul></div>`;
+    }
+  } else if (currentTab === 'code') {
+    html += `<div><h4 class="drill-sec-h">C++ Pattern</h4>`;
+    if (d.cppImplementation) {
+      const code = typeof d.cppImplementation === 'object' ? d.cppImplementation.code : d.cppImplementation;
+      const exp = typeof d.cppImplementation === 'object' ? d.cppImplementation.explanation : '';
+      html += `<pre class="drill-code"><code>${code}</code></pre>`;
+      if (exp) html += `<p class="drill-p">${exp}</p>`;
+    }
+    html += `</div>`;
+  } else if (currentTab === 'interview') {
+    if (d.interviewQuestions && Array.isArray(d.interviewQuestions)) {
+      html += `<div><h4 class="drill-sec-h">Interview Questions &amp; Answers</h4><div class="drill-qa">`;
+      d.interviewQuestions.forEach(qa => {
+        html += `<div class="drill-qa-item"><p class="drill-qa-q">Q: ${qa.question}</p><p class="drill-qa-a">A: ${qa.answer}</p></div>`;
+      });
+      html += `</div></div>`;
+    }
+    if (d.commonMistakes && Array.isArray(d.commonMistakes)) {
+      html += `<div><h4 class="drill-sec-h">Common Pitfalls &amp; Edge Cases</h4><ul class="drill-list">`;
+      d.commonMistakes.forEach(m => html += `<li>${m}</li>`);
+      html += `</ul></div>`;
+    }
+  } else if (currentTab === 'practice') {
+    if (d.practiceProblems) {
+      html += `<div><h4 class="drill-sec-h">Curated Practice Problems</h4><div class="drill-p">`;
+      if (typeof d.practiceProblems === 'object') {
+        for (const [lvl, probs] of Object.entries(d.practiceProblems)) {
+          if (Array.isArray(probs) && probs.length > 0) {
+            html += `<p style="margin-bottom:8px"><strong>${lvl.toUpperCase()}:</strong> ${probs.join(', ')}</p>`;
+          }
+        }
+      }
+      html += `</div></div>`;
+    }
+  }
+
+  html += `</div>`;
+  drillBody.innerHTML = html;
+}
+
+function openDrilldown(topicNum, topicTitle, tag, tierName) {
+  drillCrumb.textContent = `${tierName || 'DSA Tier'} / Atom #${topicNum}`;
+  drillTitle.textContent = topicTitle;
+  drillTags.innerHTML = `<span class="tag tag-${tag}" title="Importance">${tag}</span>`;
+  
+  currentDrillData = generateTopicFallback(topicNum, topicTitle, tag);
+  currentTab = 'overview';
+  document.querySelectorAll('.drill-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === 'overview'));
+  renderDrillBody();
+
+  drillOverlay.classList.add('open');
+}
+
+function initTopicDrilldowns() {
+  document.querySelectorAll('input[type="checkbox"], .box').forEach(el => el.remove());
+
+  document.querySelectorAll('.item').forEach((item, index) => {
+    const topicNum = index + 1;
+    item.dataset.topicNum = topicNum;
+
+    const label = item.querySelector('label');
+    if (!label) return;
+
+    if (!label.querySelector('.drill-hint')) {
+      const hint = document.createElement('span');
+      hint.className = 'drill-hint';
+      hint.innerHTML = `Drilldown &rarr;`;
+      label.appendChild(hint);
+    }
+
+    label.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const tierSec = item.closest('.tier');
+      const tierName = tierSec ? tierSec.querySelector('.tier-head h2').textContent : '';
+      const topicTitle = item.querySelector('.txt') ? item.querySelector('.txt').textContent : `Topic ${topicNum}`;
+      const tag = item.dataset.tag || 'B';
+
+      openDrilldown(topicNum, topicTitle, tag, tierName);
+    });
+  });
+}
+
+function generateTopicFallback(topicNum, topicTitle, tag) {
+  const cleanTitle = topicTitle.trim();
+  const lower = cleanTitle.toLowerCase();
+  
+  // Custom precise study guides for Atoms 1 to 11
+  if (topicNum === 1) {
+    return {
+      title: cleanTitle,
+      overview: "Asymptotic analysis describes how an algorithm's resource usage grows as input size increases, ignoring constant factors and hardware details.",
+      definition: {
+        bigO: "Upper bound. Tells you how bad running time can get for large n.",
+        bigTheta: "Tight bound. Defines the exact asymptotic growth rate.",
+        bigOmega: "Lower bound. Minimum guarantee of work required."
+      },
+      intuition: [
+        "Big-O: Worst-case ceiling guarantee.",
+        "Big-Theta: Exact matching growth order.",
+        "Big-Omega: Best-case floor bound."
+      ],
+      cppImplementation: {
+        code: `// Big-Theta(N) linear scan example\nfor (int i = 0; i < n; i++) {\n    // O(1) operations\n}`,
+        explanation: "Loop always executes n times, giving T(n) = Θ(n)."
+      },
+      interviewQuestions: [
+        { question: "Why ignore constants in Big-O?", answer: "Constants depend on hardware/compilers and become negligible for very large n." },
+        { question: "Is O(2n) different from O(n)?", answer: "No, constant multipliers drop out, leaving O(n)." }
+      ],
+      commonMistakes: ["Confusing worst-case with Big-O definition", "Keeping constant factors"],
+      practiceProblems: { easy: ["Two Sum"], medium: ["Binary Search"], hard: ["Median of Two Sorted Arrays"] }
+    };
+  } else if (topicNum === 2) {
+    return {
+      title: cleanTitle,
+      overview: "Derive time complexity by counting dominant operation executions across single loops, nested loops, and loop-halving patterns.",
+      definition: "Express total operations as f(n), then drop constants and lower-order terms.",
+      intuition: [
+        "Single loop (0..n) -> O(n)",
+        "Nested loop (0..n * 0..n) -> O(n^2)",
+        "Halving/doubling (i *= 2) -> O(log n)"
+      ],
+      cppImplementation: {
+        code: `// O(log n) halving loop\nfor(int i = n; i > 0; i /= 2) {\n    // O(1) work\n}`,
+        explanation: "Loop halves input space each iteration, executing log2(n) times."
+      },
+      interviewQuestions: [
+        { question: "Complexity of inner loop from i to n?", answer: "Sum of 1..n is n(n+1)/2 = O(n^2)." }
+      ],
+      commonMistakes: ["Adding nested loop complexities instead of multiplying them"],
+      practiceProblems: { easy: ["Loop Counting"], medium: ["Search Rotated Array"] }
+    };
+  } else if (topicNum === 3) {
+    return {
+      title: cleanTitle,
+      overview: "The recursion tree method expands recurrences T(n) = aT(n/b) + f(n) into levels to sum total work per level and height.",
+      definition: "Sum of work across all tree levels: T(n) = sum_{level=0}^{log_b(n)} (a^level * f(n / b^level)).",
+      intuition: [
+        "Tree height = log_b(n).",
+        "Number of leaves = a^(log_b(n)) = n^(log_b(a)).",
+        "Total work depends on whether root, leaves, or all levels dominate."
+      ],
+      cppImplementation: {
+        code: `// T(n) = 2T(n/2) + n (Merge Sort)\n// Level 0: n\n// Level 1: 2 * (n/2) = n\n// Total = n * log2(n) = O(n log n)`,
+        explanation: "Every level contributes total work n. Height is log2(n)."
+      },
+      interviewQuestions: [
+        { question: "When does recursion tree method help over Master Theorem?", answer: "When recurrences have non-constant split ratios like T(n) = T(n/3) + T(2n/3) + n." }
+      ],
+      commonMistakes: ["Forgetting to sum across ALL levels including leaves"],
+      practiceProblems: { medium: ["Merge Sort Analysis", "QuickSelect Analysis"] }
+    };
+  } else if (topicNum === 4) {
+    return {
+      title: cleanTitle,
+      overview: "Master Theorem provides direct closed-form asymptotic bounds for recurrences of the form T(n) = aT(n/b) + f(n).",
+      definition: {
+        "Case 1 (Leaf Heavy)": "f(n) = O(n^(log_b(a) - eps)) => T(n) = Θ(n^(log_b a))",
+        "Case 2 (Balanced)": "f(n) = Θ(n^(log_b a)) => T(n) = Θ(n^(log_b a) * log n)",
+        "Case 3 (Root Heavy)": "f(n) = Ω(n^(log_b(a) + eps)) => T(n) = Θ(f(n))"
+      },
+      intuition: ["Compares non-recursive work f(n) against leaf count n^(log_b a)."],
+      cppImplementation: {
+        code: `// T(n) = 4T(n/2) + n\n// a=4, b=2 => n^(log_2 4) = n^2.\n// f(n) = n = O(n^(2-1)) => Case 1 => T(n) = Θ(n^2).`,
+        explanation: "Leaf work n^2 dominates non-recursive work n."
+      },
+      interviewQuestions: [
+        { question: "When does Master Theorem fail?", answer: "When a < 1, b <= 1, or f(n) is non-polynomial (e.g. 2^n)." }
+      ],
+      commonMistakes: ["Applying it to non-constant branching factors"],
+      practiceProblems: { medium: ["Master Theorem Drill"] }
+    };
+  } else if (topicNum === 5) {
+    return {
+      title: cleanTitle,
+      overview: "Amortized analysis guarantees average cost per operation over a worst-case sequence of operations (e.g. dynamic array doubling).",
+      definition: "Total cost for N operations divided by N. Vector push_back is O(1) amortized.",
+      intuition: [
+        "Array doubling spends O(N) reallocation cost only once every N pushes.",
+        "Unused budget saved from cheap O(1) pushes pays for expensive reallocations."
+      ],
+      cppImplementation: {
+        code: `vector<int> v;\nfor(int i = 0; i < N; i++) v.push_back(i);\n// Total copy cost = 1 + 2 + 4 + ... + N = 2N = O(N).\n// Per push = 2N / N = O(1) amortized.`,
+        explanation: "Reallocation occurs at powers of 2. Geometric series sum is linear."
+      },
+      interviewQuestions: [
+        { question: "Why vector push_back is O(1) amortized?", answer: "Because doubling capacity spreads reallocation costs evenly across all preceding pushes." }
+      ],
+      commonMistakes: ["Confusing amortized complexity with average-case complexity"],
+      practiceProblems: { easy: ["Implement Dynamic Array"] }
+    };
+  } else if (topicNum === 6) {
+    return {
+      title: cleanTitle,
+      overview: "Space complexity counts auxiliary memory used beyond input data, including call stack frames during recursion.",
+      definition: "Total Space = Auxiliary Space + Call Stack Depth + Output Buffer.",
+      intuition: [
+        "Recursion stack depth equals maximum tree height H.",
+        "Balanced tree H = log N; skewed tree H = N."
+      ],
+      cppImplementation: {
+        code: `int maxDepth(TreeNode* root) {\n    if(!root) return 0;\n    return 1 + max(maxDepth(root->left), maxDepth(root->right));\n}`,
+        explanation: "Space complexity is O(H) where H is tree height due to call stack frames."
+      },
+      interviewQuestions: [
+        { question: "What is space complexity of quicksort?", answer: "O(log N) auxiliary space for recursive stack if tail-call optimized." }
+      ],
+      commonMistakes: ["Forgetting recursion stack space in DFS"],
+      practiceProblems: { easy: ["Maximum Depth of Binary Tree"] }
+    };
+  } else if (topicNum === 7) {
+    return {
+      title: cleanTitle,
+      overview: "Mapping problem input size N to required time complexity based on a ~10^8 operations per second CPU execution budget.",
+      definition: {
+        "N <= 10": "O(N!) or O(4^N)",
+        "N <= 20": "O(2^N) Bitmask DP",
+        "N <= 500": "O(N^3) Floyd-Warshall",
+        "N <= 5000": "O(N^2)",
+        "N <= 10^5": "O(N log N) Sorting / Binary Search",
+        "N <= 10^7": "O(N) Linear Scan",
+        "N > 10^8": "O(log N) or O(1)"
+      },
+      intuition: ["Always check N in problem constraints first to choose the correct approach."],
+      cppImplementation: {
+        code: `// Constraint N = 10^5 => Target O(N log N) or O(N)\nstd::sort(arr.begin(), arr.end()); // O(N log N) OK`,
+        explanation: "10^5 log2(10^5) ≈ 1.7 * 10^6 ops, comfortably within 1 second."
+      },
+      interviewQuestions: [
+        { question: "N = 10^5 limit, can we use O(N^2)?", answer: "No, (10^5)^2 = 10^10 ops, which will Time Limit Exceeded (TLE)." }
+      ],
+      commonMistakes: ["Ignoring constraint limits before coding"],
+      practiceProblems: { medium: ["Constraint Analysis"] }
+    };
+  } else if (topicNum === 8) {
+    return {
+      title: cleanTitle,
+      overview: "Core C++ sequence containers. Capacity is total allocated memory; size is number of elements currently stored.",
+      definition: "`v.reserve(N)` allocates memory without constructing elements. `v.resize(N)` constructs elements.",
+      intuition: ["Use `.reserve()` before inserting known N items to avoid repeated reallocations."],
+      cppImplementation: {
+        code: `vector<int> v;\nv.reserve(1000); // Allocates capacity for 1000 elements\nfor(int i=0; i<1000; i++) v.push_back(i); // 0 reallocations!`,
+        explanation: "Prevents reallocation overhead."
+      },
+      interviewQuestions: [
+        { question: "Difference between reserve and resize?", answer: "reserve changes capacity without adding elements; resize changes size and initializes elements." }
+      ],
+      commonMistakes: ["Accessing v[i] after reserve without push_back"],
+      practiceProblems: { easy: ["Vector Operations"] }
+    };
+  } else if (topicNum === 9) {
+    return {
+      title: cleanTitle,
+      overview: "Grouping multiple heterogeneous values using `std::pair`, `std::tuple`, and C++17 structured bindings.",
+      definition: "`auto [x, y, z] = myTuple;` unpacks elements directly by value or reference.",
+      intuition: ["Clean syntax for returning multiple values or Dijkstra priority queue entries."],
+      cppImplementation: {
+        code: `tuple<int, string, double> item{1, "Apple", 2.5};\nauto [id, name, price] = item;\ncout << name << ": $" << price;`,
+        explanation: "Structured binding unpacks tuple in single clean statement."
+      },
+      interviewQuestions: [
+        { question: "How to compare pairs?", answer: "std::pair compares first element first, then second element if first is equal." }
+      ],
+      commonMistakes: ["Forgetting C++17 flag when using structured bindings"],
+      practiceProblems: { easy: ["Tuple Unpacking"] }
+    };
+  } else if (topicNum === 10) {
+    return {
+      title: cleanTitle,
+      overview: "Iterating safely over containers using range-for and references `const auto&` to avoid expensive copies.",
+      definition: "Use `for(const auto& x : v)` for read-only iteration; `for(auto& x : v)` for mutation.",
+      intuition: ["Iterating by value `for(auto x : v)` creates full copies of string/vector objects."],
+      cppImplementation: {
+        code: `vector<string> words = {"alpha", "beta"};\nfor(const auto& w : words) {\n    cout << w << "\\n"; // No string copying!\n}`,
+        explanation: "const reference avoids string duplication cost."
+      },
+      interviewQuestions: [
+        { question: "Why use const auto& in range-for?", answer: "Avoids copy constructor calls while guaranteeing container immutability." }
+      ],
+      commonMistakes: ["Modifying elements during read-only iteration"],
+      practiceProblems: { easy: ["Iterator Basics"] }
+    };
+  } else if (topicNum === 11) {
+    return {
+      title: cleanTitle,
+      overview: "Custom sorting with lambda functions ensuring strict weak ordering invariants.",
+      definition: "Comparator must return false when elements are equal (a < b rule, not a <= b).",
+      intuition: ["Return true if first element should come BEFORE second element."],
+      cppImplementation: {
+        code: `sort(v.begin(), v.end(), [](const Item& a, const Item& b) {\n    if (a.score != b.score) return a.score > b.score; // High score first\n    return a.id < b.id; // Tie-breaker by ID\n});`,
+        explanation: "Multi-key sorting lambda with strict weak ordering."
+      },
+      interviewQuestions: [
+        { question: "What happens if comparator uses <= instead of <?", answer: "Violates strict weak ordering requirement, causing undefined behavior or runtime segfault in std::sort." }
+      ],
+      commonMistakes: ["Using <= in custom comparator"],
+      practiceProblems: { medium: ["Custom Sort Items", "Largest Number"] }
+    };
+  }
+
+  // General Pattern Matcher for Topics 12 to 395
+  let overview = `Comprehensive study guide for Atom #${topicNum}: ${cleanTitle}.`;
+  let definition = `Mastering this concept is essential for technical interviews and competitive programming.`;
+  let intuition = [`Focus on understanding the underlying state and invariant.`, `Practice implementing this from a blank file without reference.`];
+  let cppCode = `// C++ implementation pattern for ${cleanTitle}\nvoid solve() {\n    // Core logic\n}`;
+  let timeComp = "O(n)";
+  let spaceComp = "O(1)";
+
+  if (lower.includes("prefix") || lower.includes("difference")) {
+    overview = "Prefix techniques precompute cumulative data (sums, XOR, products) to allow O(1) range queries or O(1) range updates using difference arrays.";
+    definition = "Precompute P[i] = P[i-1] + A[i]. Range sum [L, R] = P[R] - P[L-1].";
+    intuition = ["Transform range queries from O(N) into O(1) time.", "Combine with HashMaps to count subarrays meeting target properties."];
+    cppCode = `// 1D Prefix Sum\nvector<long long> P(n + 1, 0);\nfor(int i = 0; i < n; i++) P[i+1] = P[i] + A[i];\n// Range sum [L, R] (0-indexed):\nlong long sum = P[R + 1] - P[L];`;
+    timeComp = "O(n) precomputation, O(1) query";
+    spaceComp = "O(n)";
+  } else if (lower.includes("two pointer") || lower.includes("2sum") || lower.includes("3sum") || lower.includes("partition")) {
+    overview = "Two-pointer techniques use two indices moving in converging or same directions to scan linearly through arrays or lists.";
+    definition = "Maintain left and right pointers based on monotonicity (e.g. sorted array properties).";
+    intuition = ["Avoid nested loops by skipping impossible search space.", "Remember to handle duplicate elements in 3Sum/4Sum discipline."];
+    cppCode = `int L = 0, R = n - 1;\nwhile(L < R) {\n    int sum = A[L] + A[R];\n    if(sum == target) return {L, R};\n    else if(sum < target) L++;\n    else R--;\n}`;
+    timeComp = "O(n)";
+    spaceComp = "O(1)";
+  } else if (lower.includes("window") || lower.includes("sliding")) {
+    overview = "Sliding window maintains a dynamic or fixed subarray range while sliding across the sequence to evaluate optimal constraints.";
+    definition = "Expand right pointer to include elements; shrink left pointer while constraints are violated.";
+    intuition = ["Track window metrics (frequency map, sum, max) without recomputing from scratch.", "Use shrink-while-invalid template for variable windows."];
+    cppCode = `int L = 0, maxLen = 0;\nunordered_map<char, int> freq;\nfor(int R = 0; R < n; R++) {\n    freq[s[R]]++;\n    while(freq[s[R]] > 1) {\n        freq[s[L]]--;\n        L++;\n    }\n    maxLen = max(maxLen, R - L + 1);\n}`;
+    timeComp = "O(n)";
+    spaceComp = "O(K) where K is unique character set";
+  } else if (lower.includes("binary search") || lower.includes("bound")) {
+    overview = "Binary search divides monotonic search space in half each iteration to achieve logarithmic search time.";
+    definition = "Maintain low and high bounds such that target or optimal predicate is monotonically split.";
+    intuition = ["Identify the monotone predicate: F F F T T T.", "Binary search on the answer for minimize-the-maximum problems."];
+    cppCode = `int lo = 1, hi = 1e9, ans = hi;\nwhile(lo <= hi) {\n    int mid = lo + (hi - lo) / 2;\n    if(check(mid)) {\n        ans = mid;\n        hi = mid - 1;\n    } else {\n        lo = mid + 1;\n    }\n}`;
+    timeComp = "O(log N)";
+    spaceComp = "O(1)";
+  } else if (lower.includes("stack") || lower.includes("monotonic")) {
+    overview = "Monotonic stack maintains elements in strictly increasing or decreasing order to answer nearest greater/smaller queries in O(n).";
+    definition = "Push elements while maintaining order invariant by popping smaller/greater elements.";
+    intuition = ["Use for Next Greater Element, Daily Temperatures, and Histogram Area.", "Each element enters and leaves the stack at most once."];
+    cppCode = `stack<int> st;\nvector<int> nge(n, -1);\nfor(int i = 0; i < n; i++) {\n    while(!st.empty() && A[st.top()] < A[i]) {\n        nge[st.top()] = A[i];\n        st.pop();\n    }\n    st.push(i);\n}`;
+    timeComp = "O(n) amortized";
+    spaceComp = "O(n)";
+  } else if (lower.includes("tree") || lower.includes("bst") || lower.includes("traversal")) {
+    overview = "Tree structures represent hierarchical data. Binary trees and BSTs form the basis of logarithmic search and dynamic set storage.";
+    definition = "Root node with left and right subtrees. Inorder traversal of BST gives sorted keys.";
+    intuition = ["Use DFS (preorder, inorder, postorder) for structural propagation.", "Use BFS with queue for level-order and shortest path on unweighted trees."];
+    cppCode = `void inorder(TreeNode* root) {\n    if(!root) return;\n    inorder(root->left);\n    cout << root->val << " ";\n    inorder(root->right);\n}`;
+    timeComp = "O(N)";
+    spaceComp = "O(H) recursion stack height";
+  } else if (lower.includes("graph") || lower.includes("bfs") || lower.includes("dfs")) {
+    overview = "Graphs model pairwise relationships between vertices via directed or undirected edges.";
+    definition = "G = (V, E). Represented via Adjacency List `vector<vector<int>> adj`.";
+    intuition = ["BFS uses queue for shortest path in unweighted graphs.", "DFS uses stack/recursion for cycle detection, topological sort, and components."];
+    cppCode = `vector<bool> vis(V, false);\nqueue<int> q;\nq.push(src); vis[src] = true;\nwhile(!q.empty()) {\n    int u = q.front(); q.pop();\n    for(int v : adj[u]) {\n        if(!vis[v]) { vis[v] = true; q.push(v); }\n    }\n}`;
+    timeComp = "O(V + E)";
+    spaceComp = "O(V + E)";
+  } else if (lower.includes("dp") || lower.includes("dynamic programming") || lower.includes("subsequence") || lower.includes("knapsack")) {
+    overview = "Dynamic Programming solves complex optimization problems by breaking them down into overlapping subproblems with optimal substructure.";
+    definition = "Define DP state `dp[i]` = optimal answer for subproblem `i`. Write transition relation.";
+    intuition = ["Start with top-down recursion + memoization, then convert to bottom-up table.", "Optimize space when `dp[i]` only depends on `dp[i-1]`."];
+    cppCode = `vector<int> dp(n + 1, 0);\ndp[0] = 0; dp[1] = 1;\nfor(int i = 2; i <= n; i++) {\n    dp[i] = dp[i-1] + dp[i-2];\n}`;
+    timeComp = "O(N)";
+    spaceComp = "O(N) (or O(1) space optimized)";
+  } else if (lower.includes("map") || lower.includes("hash") || lower.includes("set")) {
+    overview = "Hash tables (`unordered_map`/`unordered_set`) offer O(1) average lookup, insertion, and deletion, while Red-Black trees (`map`/`set`) maintain sorted order in O(log n).";
+    definition = "Use `unordered_map` for fast lookups; use `map` when lower_bound/upper_bound or sorted iteration is required.";
+    intuition = ["Be cautious of hash collisions (anti-hash attack) in competitive programming.", "Custom hash required for `std::pair` keys in `unordered_map`."];
+    cppCode = `unordered_map<int, int> freq;\nfreq.reserve(1024);\nfor(int x : nums) freq[x]++;\nfor(auto& [key, count] : freq) {\n    cout << key << ": " << count << "\\n";\n}`;
+    timeComp = "O(1) average, O(N) worst case";
+    spaceComp = "O(N)";
+  }
+
+  return {
+    title: `Atom #${topicNum}: ${cleanTitle}`,
+    overview: overview,
+    definition: definition,
+    intuition: intuition,
+    whyItMatters: [
+      "Core building block in competitive coding and technical interviews.",
+      "Improves algorithmic intuition and edge-case handling."
+    ],
+    cppImplementation: {
+      code: cppCode,
+      explanation: `Standard C++ snippet for ${cleanTitle}. Time: ${timeComp}, Space: ${spaceComp}.`
+    },
+    interviewQuestions: [
+      {
+        question: `What is the key invariant of ${cleanTitle}?`,
+        answer: `Maintain valid state while ensuring time complexity bounds (${timeComp}).`
+      },
+      {
+        question: `What is the space complexity?`,
+        answer: `Requires ${spaceComp}.`
+      }
+    ],
+    commonMistakes: [
+      "Off-by-one index mistakes.",
+      "Integer overflow during intermediate additions/multiplications.",
+      "Not handling boundary conditions (empty input, single element)."
+    ],
+    practiceProblems: {
+      easy: ["Standard Practice Problem 1"],
+      medium: ["LeetCode Medium Variant"],
+      hard: ["Advanced Competitive Variant"]
+    }
+  };
+}
+
+load();
+initTopicDrilldowns();
+</script>
+</body>
+</html>
